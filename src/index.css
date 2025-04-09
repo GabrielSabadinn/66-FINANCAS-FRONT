@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  font-family: "Plus Jakarta Display", sans-serif;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.87);
+  /* Definindo a cor primária como um violeta */
+  --primary: oklch(0.43 0.2343 292.717); /* Violeta do exemplo anterior */
+  --primary-foreground: oklch(
+    0.969 0.016 293.756
+  ); /* Texto claro para contraste */
+  --radius: 1rem;
+  --background: oklch(1 0 0); /* Fundo padrão, se necessário */
+  --foreground: oklch(0.141 0.005 285.823); /* Cor de texto padrão */
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
