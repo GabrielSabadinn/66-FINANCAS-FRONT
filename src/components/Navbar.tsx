@@ -102,7 +102,7 @@ const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
           <img
             src={Logo}
             alt="Logo"
-            className="w-40 h-5 mr-2 md:w-40 md:h-10" // Reduzi a altura do logo
+            className="w-40 h-5 mr-2 md:w-40 md:h-9" // Reduzi a altura do logo
           />
         </Link>
 
