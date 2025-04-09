@@ -14,17 +14,22 @@ import {
 } from "@/variables/general";
 import { useTranslation } from "react-i18next";
 
-export const ProjectsTable: React.FC = () => {
+export const FinancialTransactionsTable: React.FC = () => {
   const { t } = useTranslation();
   return (
     <Card className="p-4 bg-[rgb(19,21,54)] border-none overflow-x-auto">
       <CardHeader className="p-3 pb-7">
         <div className="flex flex-col">
-          <p className="text-lg text-white font-bold pb-2"></p>
+          <p className="text-lg text-white font-bold pb-2">
+            {t("recent_transactions")}
+          </p>
           <div className="flex items-center">
-            <CheckCircle className="w-4 h-4 text-violet-400 mr-1" />7
+            <CheckCircle className="w-4 h-4 text-violet-400 mr-1" />
             <p className="text-sm text-gray-400">
-              <span className="font-bold">30 done</span> this month.
+              <span className="font-bold">
+                {t("total_transactions", { count: 30 })}
+              </span>{" "}
+              {t("this_month")}
             </p>
           </div>
         </div>
@@ -32,10 +37,10 @@ export const ProjectsTable: React.FC = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <th className="py-2 px-0"> {t("last_expenses")}</th>
-            <th className="py-2">Members</th>
-            <th className="py-2">Budget</th>
-            <th className="py-2">Completion</th>
+            <th className="py-2 px-0">{t("last_expenses")}</th>
+            <th className="py-2">{t("last_incomes")}</th>
+            <th className="py-2">{t("date")}</th>
+            <th className="py-2">{t("amount")}</th>
           </TableRow>
         </TableHeader>
         <TableBody>

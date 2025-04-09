@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
+import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Dashboard";
+// Ajuste o caminho se necessário
 import MainLayout from "@/layouts/MainLayout";
 import { Outlet } from "react-router-dom";
 
@@ -22,7 +24,6 @@ export interface Route {
   children?: Route[];
 }
 
-// Componente wrapper para incluir o select
 function AppWrapper() {
   const { i18n } = useTranslation();
   const location = useLocation();
@@ -51,7 +52,7 @@ function AppWrapper() {
           </select>
         </div>
       )}
-      <Outlet /> {/* Renderiza o conteúdo da rota */}
+      <Outlet />
     </div>
   );
 }
@@ -59,7 +60,7 @@ function AppWrapper() {
 export const routes: Route[] = [
   {
     path: "/",
-    element: <AppWrapper />, // Usa o wrapper como root
+    element: <AppWrapper />,
     children: [
       {
         path: "/",
@@ -90,13 +91,13 @@ export const routes: Route[] = [
             path: "/profile",
             name: "profile",
             icon: <User className="w-4 h-4" />,
-            element: <div>Profile Page</div>,
+            element: <Profile />, // Corrigido para usar o componente Profile
           },
           {
-            path: "/tabeles",
-            name: "tabeles",
+            path: "/tables",
+            name: "tables",
             icon: <Table2 className="w-4 h-4" />,
-            element: <div>Table profile</div>,
+            // element: <FinancialTransactionsTable />, // Ajustado para tabelas
           },
         ],
       },

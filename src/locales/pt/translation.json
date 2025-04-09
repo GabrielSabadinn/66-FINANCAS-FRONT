@@ -57,5 +57,24 @@
       "dec": "Dez"
     }
   },
-  "last_expenses": "Ultimas despesas"
+  "last_expenses": "Últimos Gastos",
+  "last_incomes": "Últimas Entradas",
+  "recent_transactions": "Transações Recentes",
+  "total_transactions": "{count} realizadas",
+  "this_month": "neste mês",
+  "date": "Data",
+  "amount": "Valor",
+  "profile": "Perfil",
+  "tables": "Tabelas",
+  "dashboard": "Painel",
+  "profile_title": "Seu Perfil",
+  "change_profile_picture": "Alterar Foto de Perfil",
+  "bio_label": "Biografia",
+  "save_changes": "Salvar Alterações",
+  "quick_stats": "Estatísticas Rápidas",
+  "joined_date": "Data de Entrada",
+  "total_transactions2": "Total de Transações",
+  "profile_saved": "Perfil salvo com sucesso!",
+  "dashboard_image_label": "Imagem do Dashboard",
+  "change_dashboard_image": "Alterar Imagem do Dashboard"
 }

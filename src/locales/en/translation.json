@@ -57,5 +57,24 @@
       "dec": "Dec"
     }
   },
-  "last_expenses": "Last Expenses"
+  "last_expenses": "Last Expenses",
+  "last_incomes": "Last Incomes",
+  "recent_transactions": "Recent Transactions",
+  "total_transactions": "{count} done",
+  "this_month": "this month",
+  "date": "Date",
+  "amount": "Amount",
+  "profile": "Profile",
+  "tables": "Tables",
+  "dashboard": "Dashboard",
+  "profile_title": "Your Profile",
+  "change_profile_picture": "Change Profile Picture",
+  "bio_label": "Bio",
+  "save_changes": "Save Changes",
+  "quick_stats": "Quick Stats",
+  "joined_date": "Joined Date",
+  "total_transactions2": "Total Transactions",
+  "profile_saved": "Profile saved successfully!",
+  "dashboard_image_label": "Dashboard Image",
+  "change_dashboard_image": "Change Dashboard Image"
 }

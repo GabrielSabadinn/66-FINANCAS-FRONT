@@ -4,7 +4,7 @@ import { WelcomeCard } from "../components/WelcomeCard";
 import { SatisfactionRateCard } from "../components/SatisfactionRateCard";
 import { FinancialFreedomCard } from "../components/FinancialFreedomCard";
 import { ChartCard } from "../components/ChartCard";
-import { ProjectsTable } from "../components/ProjectsTable";
+import { FinancialTransactionsTable } from "../components/ProjectsTable"; // Ajustado aqui
 import { Wallet, Globe, FileText, ShoppingCart } from "lucide-react";
 import {
   getBarChartDataDashboard,
@@ -55,7 +55,6 @@ export default function Dashboard() {
           icon={ShoppingCart}
         />
       </div>
-
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr] gap-3 mb-4 md:gap-4 md:mb-6">
         <WelcomeCard t={t} />
@@ -67,7 +66,6 @@ export default function Dashboard() {
           percentage={64}
         />
       </div>
-
       {/* Charts */}
       <div className="flex flex-col xl:flex-row gap-3 mb-4 md:gap-4 md:mb-6">
         <ChartCard
@@ -96,8 +94,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Projects Table */}
-      <ProjectsTable />
+      <FinancialTransactionsTable />
     </div>
   );
 }
