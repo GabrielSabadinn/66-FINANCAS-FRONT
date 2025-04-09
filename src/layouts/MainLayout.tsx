@@ -5,8 +5,8 @@ import { navbarRoutes } from "../routes";
 const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen">
-      <Navbar logoText="SIMMMPLE" routes={navbarRoutes} />
-      <div className="pt-16">
+      <Navbar routes={navbarRoutes} />
+      <div>
         {" "}
         <Outlet />
       </div>

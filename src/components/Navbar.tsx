@@ -4,21 +4,16 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerOverlay } from "@/components/ui/drawer";
 import { Menu, X } from "lucide-react";
-import { SimmmpleLogoWhite } from "../components/Icons/Icons";
 import { Route } from "@/routes";
 import { cn } from "@/lib/utils";
+import Logo from "../assets/Logo.png";
 
 interface NavbarProps {
-  logoText: string;
   routes: Route[];
   iconColor?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
-  logoText,
-  routes,
-  iconColor = "white",
-}) => {
+const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -95,7 +90,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div
-      className="fixed top-0 left-0 w-full z-50 text-white shadow-md h-14 md:h-16"
+      className="fixed top-0 left-0 w-full z-50 text-white shadow-md h-14 md:h-16" // Reduzi a altura do navbar
       style={{
         backgroundImage:
           "linear-gradient(90deg, rgba(71,5,138,1) 0%, rgba(22,10,33,1) 50%, rgba(71,5,138,1) 100%)",
@@ -104,18 +99,11 @@ const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-screen-xl mx-auto px-4 h-full flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <SimmmpleLogoWhite className="w-5 h-5 mr-1.5 md:w-6 md:h-6" />
-          <span
-            className="text-xs font-bold tracking-widest md:text-sm"
-            style={{
-              background:
-                "linear-gradient(97.89deg, #FFFFFF 70.67%, rgba(117, 122, 140, 0) 108.55%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            {logoText}
-          </span>
+          <img
+            src={Logo}
+            alt="Logo"
+            className="w-40 h-5 mr-2 md:w-40 md:h-10" // Reduzi a altura do logo
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -172,18 +160,11 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="px-4 pb-4">
             <div className="mb-6">
               <Link to="/" className="flex items-center justify-center mb-4">
-                <SimmmpleLogoWhite className="w-5 h-5 mr-1.5" />
-                <span
-                  className="text-xs font-bold tracking-widest"
-                  style={{
-                    background:
-                      "linear-gradient(97.89deg, #FFFFFF 70.67%, rgba(117, 122, 140, 0) 108.55%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  {logoText}
-                </span>
+                <img
+                  src={Logo}
+                  alt="Logo"
+                  className="w-10 h-4 mr-2" // Reduzi a altura no mobile também
+                />
               </Link>
               <div className="h-px bg-violet-900" />
             </div>
