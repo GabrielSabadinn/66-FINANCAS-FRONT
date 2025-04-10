@@ -6,7 +6,7 @@ import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Dashboard";
-// Ajuste o caminho se necessário
+import Tables from "@/pages/Tables";
 import MainLayout from "@/layouts/MainLayout";
 import { Outlet } from "react-router-dom";
 
@@ -97,7 +97,7 @@ export const routes: Route[] = [
             path: "/tables",
             name: "tables",
             icon: <Table2 className="w-4 h-4" />,
-            // element: <FinancialTransactionsTable />, // Ajustado para tabelas
+            element: <Tables />,
           },
         ],
       },

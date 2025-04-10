@@ -76,5 +76,9 @@
   "total_transactions2": "Total de Transações",
   "profile_saved": "Perfil salvo com sucesso!",
   "dashboard_image_label": "Imagem do Dashboard",
-  "change_dashboard_image": "Alterar Imagem do Dashboard"
+  "change_dashboard_image": "Alterar Imagem do Dashboard",
+  "add_transaction": "Adicionar Transação",
+  "edit_transaction": "Editar Transação",
+  "description": "Descrição",
+  "type": "Tipo"
 }

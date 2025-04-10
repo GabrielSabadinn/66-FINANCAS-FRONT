@@ -13,7 +13,10 @@ interface NavbarProps {
   iconColor?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
+const Navbar: React.FC<NavbarProps> = ({
+  routes: propRoutes,
+  iconColor = "white",
+}) => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +28,11 @@ const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
     i18n.changeLanguage(event.target.value);
   };
 
-  const isDashboard = location.pathname.startsWith("/dashboard");
+  // Array fixo de rotas que você pediu
+  const fixedRoutes = ["/dashboard", "/profile", "/tables"];
+  const isDashboard = fixedRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
 
   const activeRoute = (routeName: string) => {
     return location.pathname === routeName ? "active" : "";
@@ -85,12 +92,12 @@ const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
     });
   };
 
-  const links = createLinks(routes);
-  const mobileLinks = createLinks(routes, true);
+  const links = createLinks(propRoutes); // Usando propRoutes aqui
+  const mobileLinks = createLinks(propRoutes, true);
 
   return (
     <div
-      className="fixed top-0 left-0 w-full z-50 text-white shadow-md h-14 md:h-16" // Reduzi a altura do navbar
+      className="fixed top-0 left-0 w-full z-50 text-white shadow-md h-14 md:h-16"
       style={{
         backgroundImage:
           "linear-gradient(90deg, rgba(71,5,138,1) 0%, rgba(22,10,33,1) 50%, rgba(71,5,138,1) 100%)",
@@ -99,17 +106,13 @@ const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
       <div className="max-w-screen-xl mx-auto px-4 h-full flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <img
-            src={Logo}
-            alt="Logo"
-            className="w-40 h-5 mr-2 md:w-40 md:h-9" // Reduzi a altura do logo
-          />
+          <img src={Logo} alt="Logo" className="w-40 h-5 mr-2 md:w-40 md:h-9" />
         </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center space-x-3">{links}</div>
 
-        {/* Language Select (only on /dashboard) */}
+        {/* Language Select (only on /dashboard, /profile, /tables) */}
         {isDashboard && (
           <div className="flex items-center">
             <select
@@ -160,11 +163,7 @@ const Navbar: React.FC<NavbarProps> = ({ routes, iconColor = "white" }) => {
           <div className="px-4 pb-4">
             <div className="mb-6">
               <Link to="/" className="flex items-center justify-center mb-4">
-                <img
-                  src={Logo}
-                  alt="Logo"
-                  className="w-10 h-4 mr-2" // Reduzi a altura no mobile também
-                />
+                <img src={Logo} alt="Logo" className="w-10 h-4 mr-2" />
               </Link>
               <div className="h-px bg-violet-900" />
             </div>
