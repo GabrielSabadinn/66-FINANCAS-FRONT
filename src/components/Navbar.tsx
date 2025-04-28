@@ -37,7 +37,6 @@ const Navbar: React.FC<NavbarProps> = ({
   const activeRoute = (routeName: string) => {
     return location.pathname === routeName ? "active" : "";
   };
-
   const createLinks = (routes: Route[], isMobile = false) => {
     return routes.map((prop, key) => {
       if (prop.redirect) return null;
@@ -57,26 +56,27 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         );
       }
+
       return (
         <NavLink
           key={key}
           to={(prop.layout || "") + prop.path}
           className={({ isActive }) =>
             cn(
-              "flex items-center w-full px-3 py-2 rounded-lg transition-colors",
+              "flex items-center w-full px-4 py-3 rounded-lg transition-colors",
+              isMobile ? "min-w-[140px] text-sm" : "min-w-[160px] text-[13px]",
               isActive
                 ? "bg-violet-900 text-white"
-                : "bg-transparent text-gray-400 hover:bg-violet-900/50",
-              isMobile ? "text-xs" : "text-sm"
+                : "bg-transparent text-gray-400 hover:bg-violet-900/50"
             )
           }
         >
           <div className="flex items-center">
             {typeof prop.icon === "string" ? (
-              <span className="mr-2">{prop.icon}</span>
+              <span className="mr-3">{prop.icon}</span>
             ) : (
               <div
-                className={`flex items-center justify-center w-5 h-5 mr-2 rounded-md ${
+                className={`flex items-center justify-center w-6 h-6 mr-3 rounded-md ${
                   activeRoute((prop.layout || "") + prop.path) === "active"
                     ? "bg-violet-600"
                     : "bg-violet-900"
@@ -92,7 +92,7 @@ const Navbar: React.FC<NavbarProps> = ({
     });
   };
 
-  const links = createLinks(propRoutes); // Usando propRoutes aqui
+  const links = createLinks(propRoutes);
   const mobileLinks = createLinks(propRoutes, true);
 
   return (
@@ -104,15 +104,16 @@ const Navbar: React.FC<NavbarProps> = ({
       }}
     >
       <div className="max-w-screen-xl mx-auto px-4 h-full flex items-center justify-between">
-        {/* Logo */}
         <Link to="/" className="flex items-center">
-          <img src={Logo} alt="Logo" className="w-40 h-5 mr-2 md:w-40 md:h-9" />
+          <img
+            src={Logo}
+            alt="Logo"
+            className="w-0 h-5 mr-[250px] md:w-40 md:h-9"
+          />
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center space-x-3">{links}</div>
 
-        {/* Language Select (only on /dashboard, /profile, /tables) */}
         {isDashboard && (
           <div className="flex items-center">
             <select

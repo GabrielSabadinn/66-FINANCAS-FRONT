@@ -6,7 +6,9 @@ import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Dashboard";
-import Tables from "@/pages/Tables";
+import TransactionTablePage from "@/pages/TransactionTablePage";
+import InvestmentTablePage from "@/pages/InvestmentTablePage";
+import FixedCostTablePage from "@/pages/FixedCostTablePage";
 import MainLayout from "@/layouts/MainLayout";
 import { Outlet } from "react-router-dom";
 
@@ -91,13 +93,25 @@ export const routes: Route[] = [
             path: "/profile",
             name: "profile",
             icon: <User className="w-4 h-4" />,
-            element: <Profile />, // Corrigido para usar o componente Profile
+            element: <Profile />,
           },
           {
-            path: "/tables",
-            name: "tables",
+            path: "/transactions",
+            name: "transactions",
             icon: <Table2 className="w-4 h-4" />,
-            element: <Tables />,
+            element: <TransactionTablePage />,
+          },
+          {
+            path: "/investments",
+            name: "investments",
+            icon: <Table2 className="w-4 h-4" />,
+            element: <InvestmentTablePage />,
+          },
+          {
+            path: "/fixed-costs",
+            name: "fixed_costs",
+            element: <FixedCostTablePage />,
+            icon: <Table2 className="w-4 h-4" />,
           },
         ],
       },

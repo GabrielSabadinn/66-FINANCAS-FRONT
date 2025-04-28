@@ -80,5 +80,7 @@
   "add_transaction": "Adicionar Transação",
   "edit_transaction": "Editar Transação",
   "description": "Descrição",
-  "type": "Tipo"
+  "type": "Tipo",
+  "transactions": "Transações",
+  "investments": "Investimentos"
 }
