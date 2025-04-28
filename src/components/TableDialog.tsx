@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil } from "lucide-react"; // Adicionado Pencil
+import { Plus, Pencil } from "lucide-react";
 
 interface FinancialTransaction {
   id: number;
@@ -67,7 +67,7 @@ const TableDialog: React.FC<TableDialogProps> = ({
     onSave(formData, isEdit);
     setIsOpen(false);
     if (!isEdit) {
-      setFormData(initialData); // Reset para valores iniciais após adicionar
+      setFormData(initialData);
     }
   };
 

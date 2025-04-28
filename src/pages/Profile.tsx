@@ -62,7 +62,6 @@ export default function Profile() {
     setTempProfileImage(null);
     setTempDashboardImage(null);
     alert(t("profile_saved"));
-    // Aqui você pode adicionar lógica para enviar os dados ao backend
   };
 
   const backgroundStyle = {

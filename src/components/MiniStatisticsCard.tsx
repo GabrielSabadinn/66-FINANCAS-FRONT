@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Tipo para formData
 interface FormData {
   description: string;
   amount: number;

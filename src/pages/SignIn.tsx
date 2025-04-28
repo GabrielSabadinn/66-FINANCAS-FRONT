@@ -16,15 +16,13 @@ export default function SignIn() {
 
   return (
     <div
-      className="relative flex h-screen text-white bg-black overflow-hidden" // Altura fixa e sem rolagem
+      className="relative flex h-screen text-white bg-black overflow-hidden"
       style={{
         backgroundImage:
           "linear-gradient(159.02deg, rgb(77, 83, 166) 14.25%, #090D2E 56.45%, rgb(58, 68, 122) 86.14%)",
       }}
     >
-      <div
-        className="h-full w-full max-w-[1044px] mx-auto pt-[100px] md:pt-0 flex flex-col lg:mr-[50px] xl:mx-auto overflow-hidden" // Altura fixa e sem rolagem
-      >
+      <div className="h-full w-full max-w-[1044px] mx-auto pt-[100px] md:pt-0 flex flex-col lg:mr-[50px] xl:mx-auto overflow-hidden">
         <div className="flex items-center justify-start select-none mx-auto lg:mx-0 lg:ms-auto w-full md:w-1/2 lg:w-[450px] px-[50px]">
           <div className="flex flex-col w-full bg-transparent mt-[50px] md:mt-[150px] lg:mt-[160px] xl:mt-[245px] mb-[60px] lg:mb-[95px]">
             <h1 className="text-[32px] font-bold text-white mb-[10px]">

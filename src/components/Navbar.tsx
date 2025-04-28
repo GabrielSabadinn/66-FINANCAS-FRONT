@@ -28,7 +28,6 @@ const Navbar: React.FC<NavbarProps> = ({
     i18n.changeLanguage(event.target.value);
   };
 
-  // Array fixo de rotas que você pediu
   const fixedRoutes = ["/dashboard", "/profile", "/tables"];
   const isDashboard = fixedRoutes.some((route) =>
     location.pathname.startsWith(route)

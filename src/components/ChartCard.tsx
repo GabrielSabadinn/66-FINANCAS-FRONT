@@ -18,7 +18,7 @@ interface ChartCardProps {
   t: (key: string) => string;
   type: "bar" | "line";
   title: string;
-  subtitle: ReactNode; // Alterado de string para ReactNode
+  subtitle: ReactNode;
   data: any[];
 }
 

@@ -11,7 +11,6 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ t }) => {
   const [randomImage, setRandomImage] = useState("");
 
   useEffect(() => {
-    // Usando Lorem Picsum para imagens aleatórias
     const timestamp = Date.now();
     setRandomImage(`https://picsum.photos/600/400?random=${timestamp}`);
   }, []);
