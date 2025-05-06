@@ -82,5 +82,19 @@
   "description": "Description",
   "type": "Type",
   "transactions": "Transactions",
-  "investments": "Investments"
+  "investments": "Investments",
+  "loading": "Loading...",
+  "errors": {
+    "name_required": "Name is required",
+    "valid_email_required": "Valid email is required",
+    "password_required": "Password is required",
+    "password_min_length": "Password must be at least 8 characters",
+    "registration_failed": "Registration failed. Please try again.",
+    "login_failed": "Login failed. Please check your credentials.",
+    "unexpected_error": "An unexpected error occurred."
+  },
+  "success": {
+    "registration_successful": "Registration successful! Please sign in.",
+    "login_successful": "Login successful! Welcome back."
+  }
 }

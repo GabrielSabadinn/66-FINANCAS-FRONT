@@ -3,15 +3,17 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import GradientBorder from "@/components/GradientBorder";
 import signUpImage from "@/assets/img/signUpImage.png";
+import { useRegister } from "@/hooks/useRegister";
 
 export default function SignUp() {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
+  const { formData, error, success, loading, handleInputChange, handleSubmit } =
+    useRegister();
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
@@ -33,7 +35,12 @@ export default function SignUp() {
               {t("signup_description")}
             </p>
 
-            <div className="space-y-6">
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {success && (
+              <p className="text-green-500 text-sm mb-4">{success}</p>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
                 <Label className="ml-[4px] text-sm font-normal text-white">
@@ -45,6 +52,9 @@ export default function SignUp() {
                 >
                   <Input
                     type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     placeholder={t("name_placeholder")}
                     className="bg-[rgb(19,21,54)] border-none rounded-[20px] text-white text-sm h-[46px] w-full md:w-[346px] max-w-full focus:border-none focus:ring-0 px-4"
                   />
@@ -62,6 +72,9 @@ export default function SignUp() {
                 >
                   <Input
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     placeholder={t("email_placeholder")}
                     className="bg-[rgb(19,21,54)] border-none rounded-[20px] text-white text-sm h-[46px] w-full md:w-[346px] max-w-full focus:border-none focus:ring-0 px-4"
                   />
@@ -81,10 +94,14 @@ export default function SignUp() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
                       placeholder={t("password_placeholder")}
                       className="bg-[rgb(19,21,54)] border-none rounded-[20px] text-white text-sm h-[46px] w-full max-w-[346px] max-md:max-w-[346px] max-md:w-full focus:border-none focus:ring-0 px-4 pr-8"
                     />
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="absolute right-6 top-1/2 -translate-y-1/2 text-white h-[10px] w-[10px] rounded-[20px]"
@@ -99,9 +116,10 @@ export default function SignUp() {
               {/* Sign Up Button */}
               <Button
                 type="submit"
-                className="w-full max-w-[350px] h-[45px] mt-[20px] mb-[20px] bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white text-[10px] font-bold"
+                disabled={loading}
+                className="w-full max-w-[350px] h-[45px] mt-[20px] mb-[20px] bg-[var(--primary)] hover:bg-opacity-90 text-white text-[10px] font-bold transition-opacity duration-200"
               >
-                {t("sign_up_button")}
+                {loading ? t("loading") : t("sign_up_button")}
               </Button>
 
               {/* Sign In Link */}
@@ -116,7 +134,7 @@ export default function SignUp() {
                   </Link>
                 </p>
               </div>
-            </div>
+            </form>
           </div>
         </div>
 

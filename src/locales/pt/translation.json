@@ -17,10 +17,10 @@
   "app_name": "66 FINANÇAS",
   "no_account": "Não tem uma conta?",
   "sign_up_link": "Registre-se",
+  "sign_out": "Sair",
   "enter_email_password": "Digite seu e-mail e senha para fazer login.",
   "sign_in_button": "ENTRAR",
   "today_money": "Saldo Atual",
-  "sign_out": "Sair",
   "future_money": "Lançamento Futuro",
   "fixed_costs": "Contas Fixas",
   "investments_money": "Investimentos",
@@ -82,5 +82,19 @@
   "description": "Descrição",
   "type": "Tipo",
   "transactions": "Transações",
-  "investments": "Investimentos"
+  "investments": "Investimentos",
+  "loading": "Carregando...",
+  "errors": {
+    "name_required": "Nome é obrigatório",
+    "valid_email_required": "E-mail válido é obrigatório",
+    "password_required": "Senha é obrigatória",
+    "password_min_length": "A senha deve ter pelo menos 8 caracteres",
+    "registration_failed": "Falha no cadastro. Tente novamente.",
+    "login_failed": "Falha no login. Verifique suas credenciais.",
+    "unexpected_error": "Ocorreu um erro inesperado."
+  },
+  "success": {
+    "registration_successful": "Cadastro realizado com sucesso! Faça login.",
+    "login_successful": "Login realizado com sucesso! Bem-vindo de volta."
+  }
 }

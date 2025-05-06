@@ -6,6 +6,7 @@ import { SatisfactionRateCard } from "../components/SatisfactionRateCard";
 import { FinancialFreedomCard } from "../components/FinancialFreedomCard";
 import { ChartCard } from "../components/ChartCard";
 import { FinancialTransactionsTable } from "../components/ProjectsTable";
+import TransactionTable from "@/components/TransactionTable";
 import { Wallet, Globe, FileText, ShoppingCart } from "lucide-react";
 import {
   getBarChartDataDashboard,
@@ -120,7 +121,7 @@ export default function Dashboard() {
           data={barData}
         />
       </div>
-      <FinancialTransactionsTable />
+      <TransactionTable />
     </div>
   );
 }
