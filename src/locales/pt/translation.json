@@ -96,5 +96,11 @@
   "success": {
     "registration_successful": "Cadastro realizado com sucesso! Faça login.",
     "login_successful": "Login realizado com sucesso! Bem-vindo de volta."
+  },
+  "confirm_logout": {
+    "title": "Confirmar Saída",
+    "description": "Tem certeza de que deseja sair? Isso encerrará sua sessão atual.",
+    "cancel": "Cancelar",
+    "confirm": "Sair"
   }
 }

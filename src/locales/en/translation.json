@@ -96,5 +96,11 @@
   "success": {
     "registration_successful": "Registration successful! Please sign in.",
     "login_successful": "Login successful! Welcome back."
+  },
+  "confirm_logout": {
+    "title": "Confirm Logout",
+    "description": "Are you sure you want to log out? This will end your current session.",
+    "cancel": "Cancel",
+    "confirm": "Log Out"
   }
 }

@@ -7,7 +7,6 @@ const MainLayout: React.FC = () => {
     <div className="min-h-screen">
       <Navbar routes={navbarRoutes} />
       <div>
-        {" "}
         <Outlet />
       </div>
     </div>

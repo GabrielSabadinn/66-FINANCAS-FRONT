@@ -82,24 +82,21 @@ export const useRegister = () => {
       setSuccess(t("success.registration_successful"));
       navigate("/auth/signin");
     } catch (err) {
+      console.log("Erro no registro:", err); // Depuração
       if (axios.isAxiosError(err) && err.response?.status === 400) {
         const errors = err.response.data.errors as ValidationError[];
+        console.log("Erros da API:", errors); // Depuração
         if (errors && errors.length > 0) {
           const errorMsg = errors[0].msg;
-          switch (errorMsg) {
-            case "Name is required":
-              setError(t("errors.name_required"));
-              break;
-            case "Valid email is required":
-              setError(t("errors.valid_email_required"));
-              break;
-            case "Password must be at least 8 characters":
-              setError(t("errors.password_min_length"));
-              break;
-            default:
-              setError(t("errors.registration_failed"));
-              break;
-          }
+          // Mapeia mensagens da API para traduções
+          const errorTranslationMap: { [key: string]: string } = {
+            "Name is required": "errors.name_required",
+            "Valid email is required": "errors.valid_email_required",
+            "Password must be at least 8 characters":
+              "errors.password_min_length",
+          };
+          const translationKey = errorTranslationMap[errorMsg];
+          setError(translationKey ? t(translationKey) : errorMsg); // Usa tradução ou msg bruta
         } else {
           setError(t("errors.registration_failed"));
         }

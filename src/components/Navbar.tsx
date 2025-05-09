@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerOverlay } from "@/components/ui/drawer";
 import { Menu, X } from "lucide-react";
 import { Route } from "@/routes";
 import { cn } from "@/lib/utils";
 import Logo from "../assets/Logo.png";
+import { useAuth } from "@/context/AuthContext";
+import { ConfirmLogoutModal } from "@/components/ConfirmLogoutModal";
 
 interface NavbarProps {
   routes: Route[];
@@ -19,8 +21,11 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState<Record<string, boolean>>({});
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleLanguageChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -36,6 +41,31 @@ const Navbar: React.FC<NavbarProps> = ({
   const activeRoute = (routeName: string) => {
     return location.pathname === routeName ? "active" : "";
   };
+
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    name?: string
+  ) => {
+    console.log("Item clicado:", name); // Depuração
+    if (name === "sign_out") {
+      console.log("Detectado clique em sign_out");
+      e.preventDefault(); // Bloqueia a navegação padrão
+      setIsLogoutModalOpen(true); // Abre o modal
+    }
+  };
+
+  const handleConfirmLogout = () => {
+    console.log("Confirmando logout");
+    logout(); // Limpa os tokens
+    setIsLogoutModalOpen(false);
+    navigate("/auth/signin"); // Redireciona
+  };
+
+  const handleCloseModal = () => {
+    console.log("Fechando modal de logout");
+    setIsLogoutModalOpen(false);
+  };
+
   const createLinks = (routes: Route[], isMobile = false) => {
     return routes.map((prop, key) => {
       if (prop.redirect) return null;
@@ -69,6 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 : "bg-transparent text-gray-400 hover:bg-violet-900/50"
             )
           }
+          onClick={(e) => handleNavClick(e, prop.name)}
         >
           <div className="flex items-center">
             {typeof prop.icon === "string" ? (
@@ -171,6 +202,13 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Modal de Confirmação de Logout */}
+      <ConfirmLogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   );
 };

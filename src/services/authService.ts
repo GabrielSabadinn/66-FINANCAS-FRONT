@@ -30,6 +30,16 @@ interface AuthResponse {
   refreshToken: string;
 }
 
+interface UserResponse {
+  Id: number; // Ajustado para maiúsculo
+  Name: string; // Ajustado para maiúsculo
+  Email: string; // Ajustado para maiúsculo
+  PathImageBanner: string | null; // Ajustado para maiúsculo
+  PathImageIcon: string | null; // Ajustado para maiúsculo
+  CreatedAt: string; // Ajustado para maiúsculo
+  UpdatedAt: string; // Ajustado para maiúsculo
+}
+
 export const authService = {
   register: async (payload: RegisterPayload): Promise<AuthResponse> => {
     try {
@@ -68,6 +78,27 @@ export const authService = {
       });
     } catch (error) {
       throw new Error("Invalid or expired token");
+    }
+  },
+
+  getUserById: async (
+    userId: number,
+    accessToken: string
+  ): Promise<UserResponse> => {
+    try {
+      const response = await axios.get<UserResponse>(
+        `${BASE_URL}/users/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      console.log("Resposta da API em getUserById:", response.data); // Para depuração
+      return response.data;
+    } catch (error) {
+      console.error("Erro em getUserById:", error);
+      throw new Error("Failed to fetch user data.");
     }
   },
 };
