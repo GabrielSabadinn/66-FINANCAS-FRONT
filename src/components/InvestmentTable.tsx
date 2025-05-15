@@ -99,7 +99,7 @@ const InvestmentTable: React.FC = () => {
           <CardTitle className="text-2xl text-white">
             {t("investments_money")}
           </CardTitle>
-          <TableDialog
+          {/*   <TableDialog
             type="investment"
             onSave={handleSave}
             initialData={{
@@ -109,7 +109,7 @@ const InvestmentTable: React.FC = () => {
               amount: 0,
               returnRate: 0,
             }}
-          />
+          /> */}
         </div>
       </CardHeader>
       <CardContent>
@@ -217,11 +217,11 @@ const InvestmentTable: React.FC = () => {
                 </TableCell>
                 <TableCell>{investment.returnRate}%</TableCell>
                 <TableCell className="flex gap-2">
-                  <TableDialog
+                  {/*      <TableDialog
                     type="investment"
                     onSave={handleSave}
                     initialData={investment}
-                  />
+                  /> */}
                   <Button
                     variant="ghost"
                     size="sm"

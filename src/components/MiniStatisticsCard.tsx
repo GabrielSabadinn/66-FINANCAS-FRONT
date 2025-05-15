@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Mic, Plus, Edit2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,13 +12,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "react-toastify";
 
+// Interface para os dados do formulário
 interface FormData {
   description: string;
   amount: number;
   type: "income" | "expense";
 }
 
+// Props do componente
 interface MiniStatisticsCardProps {
   title: string;
   value: number | string;
@@ -49,6 +51,20 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
     amount: 0,
     type: "income",
   });
+  const [isListening, setIsListening] = useState(false);
+
+  // Verifica suporte ao SpeechRecognition
+  const hasSpeechRecognition =
+    "SpeechRecognition" in window || "webkitSpeechRecognition" in window;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+  if (recognition) {
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = t("language_code") || "en-US"; // Usa idioma do i18next
+  }
 
   const formattedValue =
     typeof value === "number" ? value.toLocaleString("en-US") : value;
@@ -77,6 +93,63 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
     }
     setIsOpen(false);
     setFormData({ description: "", amount: 0, type: "income" });
+  };
+
+  const handleVoiceInput = () => {
+    if (!recognition || !onAdd) {
+      toast.error(t("errors.speech_not_supported"));
+      return;
+    }
+
+    setIsListening(true);
+    recognition.start();
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript.toLowerCase();
+      console.log("Voice input:", transcript);
+
+      let description = transcript;
+      let amount = 0;
+      let type: "income" | "expense" = "expense"; // Padrão: despesa
+
+      // Extrai o valor numérico
+      const numberMatch = transcript.match(/\d+/);
+      if (numberMatch) {
+        amount = parseInt(numberMatch[0], 10);
+        description = transcript.replace(numberMatch[0], "").trim();
+      }
+
+      // Detecta tipo com base em palavras-chave
+      if (
+        transcript.includes("income") ||
+        transcript.includes("salary") ||
+        transcript.includes("earned") ||
+        transcript.includes("receita") ||
+        transcript.includes("salário")
+      ) {
+        type = "income";
+      }
+
+      // Envia a transação automaticamente
+      onAdd({
+        description: description || "Voice transaction",
+        amount: amount || 0,
+        type: title === t("today_money") ? type : undefined,
+      });
+
+      toast.success(t("success.transaction_created"));
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+      toast.error(t("errors.speech_recognition_failed"));
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
   };
 
   return (
@@ -153,6 +226,16 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
                 aria-label={`Edit ${title}`}
               >
                 <Edit2 className="w-4 h-4 mr-2" />
+              </button>
+              <button
+                onClick={handleVoiceInput}
+                className={`text-gray-400 hover:text-white transition-colors ${
+                  isListening ? "animate-pulse" : ""
+                }`}
+                aria-label="Voice input"
+                disabled={isListening || !hasSpeechRecognition}
+              >
+                <Mic className="w-5 h-5 mr-2" />
               </button>
             </div>
             <div className="flex items-center justify-center w-9 h-9 bg-violet-600 rounded-lg md:w-10 md:h-10">

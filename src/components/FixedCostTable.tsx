@@ -86,11 +86,11 @@ const FixedCostTable: React.FC = () => {
           <CardTitle className="text-2xl text-white">
             {t("fixed_costs")}
           </CardTitle>
-          <TableDialog
+          {/*           <TableDialog
             type="fixedCost"
             onSave={handleSave}
             initialData={{ id: 0, description: "", amount: 0, dueDate: "" }}
-          />
+          /> */}
         </div>
       </CardHeader>
       <CardContent>
@@ -196,11 +196,11 @@ const FixedCostTable: React.FC = () => {
                 </TableCell>
                 <TableCell>{cost.dueDate}</TableCell>
                 <TableCell className="flex gap-2">
-                  <TableDialog
+                  {/*      <TableDialog
                     type="fixedCost"
                     onSave={handleSave}
                     initialData={cost}
-                  />
+                  /> */}
                   <Button
                     variant="ghost"
                     size="sm"

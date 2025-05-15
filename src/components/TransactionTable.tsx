@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Table,
@@ -14,6 +14,10 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Pencil, Trash2 } from "lucide-react";
 import TableDialog from "@/components/TableDialog";
+import { transactionService } from "@/services/transactionService";
+import { useAuth } from "@/context/AuthContext";
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
 
 interface FinancialTransaction {
   id: number;
@@ -21,36 +25,31 @@ interface FinancialTransaction {
   description: string;
   amount: number;
   type: "income" | "expense";
+  categoryId: number;
+  userId: number;
 }
 
-const mockTransactions: FinancialTransaction[] = [
-  {
-    id: 1,
-    date: "2025-04-01",
-    description: "Salário",
-    amount: 5000,
-    type: "income",
-  },
-  {
-    id: 2,
-    date: "2025-04-02",
-    description: "Aluguel",
-    amount: -1500,
-    type: "expense",
-  },
-  {
-    id: 3,
-    date: "2025-04-03",
-    description: "Supermercado",
-    amount: -200,
-    type: "expense",
-  },
-];
+interface Investment {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  returnRate: number;
+}
+
+interface FixedCost {
+  id: number;
+  description: string;
+  amount: number;
+  dueDate: string;
+}
 
 const TransactionTable: React.FC = () => {
   const { t } = useTranslation();
-  const [transactions, setTransactions] =
-    useState<FinancialTransaction[]>(mockTransactions);
+  const { isAuthenticated, logout } = useAuth();
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     month: "",
     minAmount: "",
@@ -58,6 +57,65 @@ const TransactionTable: React.FC = () => {
     startDate: "",
     endDate: "",
   });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTransactions();
+    }
+  }, [isAuthenticated]);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const data = await transactionService.getAllTransactions();
+      console.log("Fetched transactions:", data);
+
+      // Transform API response
+      const validTransactions: FinancialTransaction[] = data
+        .map((transaction: any) => ({
+          id: transaction.Id,
+          userId: transaction.UserId,
+          categoryId: transaction.CategoryId,
+          date: new Date(transaction.Date).toISOString().split("T")[0],
+          description: transaction.Description || "",
+          amount: transaction.Amount ?? 0,
+          type: transaction.Type ?? "income", // Fallback if backend doesn't provide Type
+        }))
+        .filter(
+          (transaction: FinancialTransaction) =>
+            transaction.id != null &&
+            transaction.amount != null &&
+            transaction.date != null &&
+            transaction.type != null &&
+            transaction.categoryId != null &&
+            transaction.userId != null
+        );
+
+      if (validTransactions.length !== data.length) {
+        toast.warn(
+          `Filtered out ${
+            data.length - validTransactions.length
+          } invalid transactions`
+        );
+      }
+      setTransactions(validTransactions);
+      setError(null);
+    } catch (err) {
+      const error = err as Error | AxiosError;
+      if (error.message === "No access token found") {
+        logout();
+      } else if (
+        error instanceof AxiosError &&
+        error.response?.status === 401
+      ) {
+        logout();
+      }
+      setError(t("errors.fetch_transactions_failed"));
+      toast.error(t("errors.fetch_transactions_failed"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filterTransactions = (t: FinancialTransaction) => {
     const date = new Date(t.date);
@@ -87,18 +145,75 @@ const TransactionTable: React.FC = () => {
 
   const filteredTransactions = transactions.filter(filterTransactions);
 
-  const handleSave = (item: FinancialTransaction, isEdit: boolean) => {
-    if (isEdit) {
-      setTransactions(transactions.map((t) => (t.id === item.id ? item : t)));
-    } else {
-      const id = transactions.length + 1;
-      setTransactions([...transactions, { ...item, id }]);
+  const handleSave = async (
+    item: FinancialTransaction | Investment | FixedCost,
+    isEdit: boolean
+  ) => {
+    try {
+      const transactionItem = item as FinancialTransaction;
+      if (isEdit) {
+        const updatedTransaction = await transactionService.updateTransaction(
+          transactionItem.id,
+          {
+            date: transactionItem.date,
+            description: transactionItem.description,
+            amount: transactionItem.amount,
+            type: transactionItem.type,
+            categoryId: transactionItem.categoryId,
+          }
+        );
+        setTransactions(
+          transactions.map((t) =>
+            t.id === transactionItem.id ? updatedTransaction : t
+          )
+        );
+        toast.success(t("success.transaction_updated"));
+      } else {
+        const newTransaction = await transactionService.createTransaction({
+          date: transactionItem.date,
+          description: transactionItem.description,
+          amount: transactionItem.amount,
+          type: transactionItem.type,
+          categoryId: transactionItem.categoryId,
+          userId: transactionItem.userId,
+        });
+        setTransactions([...transactions, newTransaction]);
+        toast.success(t("success.transaction_created"));
+      }
+      setError(null);
+    } catch (err) {
+      const error = err as Error | AxiosError;
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        logout();
+      }
+      setError(t("errors.save_transaction_failed"));
+      toast.error(t("errors.save_transaction_failed"));
     }
   };
 
-  const handleDelete = (id: number) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await transactionService.deleteTransaction(id);
+      setTransactions(transactions.filter((t) => t.id !== id));
+      setError(null);
+      toast.success(t("success.transaction_deleted"));
+    } catch (err) {
+      const error = err as Error | AxiosError;
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        logout();
+      }
+      setError(t("errors.delete_transaction_failed"));
+      toast.error(t("errors.delete_transaction_failed"));
+    }
   };
+
+  if (loading) {
+    return <div className="text-white">{t("loading")}</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
   return (
     <Card className="bg-[rgb(19,21,54)] border-none">
@@ -116,6 +231,8 @@ const TransactionTable: React.FC = () => {
               description: "",
               amount: 0,
               type: "income",
+              categoryId: 1, // Default category ID, adjust as needed
+              userId: 0, // Will be set by the backend
             }}
           />
         </div>
@@ -215,8 +332,8 @@ const TransactionTable: React.FC = () => {
                 key={transaction.id}
                 className="border-b border-[rgb(40,42,80)]"
               >
-                <TableCell>{transaction.date}</TableCell>
-                <TableCell>{transaction.description}</TableCell>
+                <TableCell>{transaction.date || "N/A"}</TableCell>
+                <TableCell>{transaction.description || "N/A"}</TableCell>
                 <TableCell
                   className={
                     transaction.type === "income"
@@ -224,10 +341,12 @@ const TransactionTable: React.FC = () => {
                       : "text-red-500"
                   }
                 >
-                  {transaction.amount.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {typeof transaction.amount === "number"
+                    ? transaction.amount.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })
+                    : "N/A"}
                 </TableCell>
                 <TableCell>
                   {t(

@@ -15,9 +15,7 @@ export const SatisfactionRateCard: React.FC<SatisfactionRateCardProps> = ({
           <p className="text-lg text-white font-bold mb-1">
             {t("satisfaction_rate")}
           </p>
-          <p className="text-sm text-gray-400">
-            MOSTRAR AQUI SE O USUARIO GASTOU DEMAIS
-          </p>
+          {/*         <p className="text-sm text-gray-400"></p> */}
         </div>
       </CardHeader>
       <CardContent className="flex flex-col justify-center items-center relative">
@@ -45,7 +43,10 @@ export const SatisfactionRateCard: React.FC<SatisfactionRateCardProps> = ({
           <p className="text-xs text-gray-400">0%</p>
           <div className="flex flex-col items-center min-w-[80px]">
             <p className="text-2xl text-white font-bold">85%</p>
-            <p className="text-xs text-gray-400">ESCREVER ALGO AQUI?</p>
+            <p className="text-xs text-gray-400">
+              {" "}
+              {t("satisfaction_rate_description")}
+            </p>
           </div>
           <p className="text-xs text-gray-400">100%</p>
         </div>

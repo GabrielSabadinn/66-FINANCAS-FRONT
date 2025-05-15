@@ -18,6 +18,8 @@ interface FinancialTransaction {
   description: string;
   amount: number;
   type: "income" | "expense";
+  categoryId: number;
+  userId: number;
 }
 
 interface Investment {
@@ -37,11 +39,14 @@ interface FixedCost {
 
 interface TableDialogProps {
   type: "transaction" | "investment" | "fixedCost";
-  onSave: (item: any, isEdit: boolean) => void;
+  onSave: (
+    item: FinancialTransaction | Investment | FixedCost,
+    isEdit: boolean
+  ) => void;
   initialData: FinancialTransaction | Investment | FixedCost;
 }
 
-const TableDialog: React.FC<TableDialogProps> = ({
+const TableDialogue: React.FC<TableDialogProps> = ({
   type,
   onSave,
   initialData,
@@ -59,7 +64,9 @@ const TableDialog: React.FC<TableDialogProps> = ({
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "amount" || name === "returnRate" ? Number(value) : value,
+        name === "amount" || name === "returnRate" || name === "categoryId"
+          ? Number(value)
+          : value,
     }));
   };
 
@@ -110,53 +117,81 @@ const TableDialog: React.FC<TableDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Input
-            placeholder={t("date")}
-            type="date"
-            name={type === "fixedCost" ? "dueDate" : "date"}
-            value={
-              type === "fixedCost"
-                ? (formData as FixedCost).dueDate
-                : (formData as FinancialTransaction | Investment).date
-            }
-            onChange={handleChange}
-            className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
-          />
-          <Input
-            placeholder={t("description")}
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
-          />
-          <Input
-            type="number"
-            placeholder={t("amount")}
-            name="amount"
-            value={formData.amount}
-            onChange={handleChange}
-            className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
-          />
-          {type === "transaction" && (
-            <select
-              name="type"
-              value={(formData as FinancialTransaction).type}
-              onChange={handleChange}
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded"
-            >
-              <option value="income">{t("last_incomes")}</option>
-              <option value="expense">{t("last_expenses")}</option>
-            </select>
-          )}
-          {type === "investment" && (
+          <div>
+            <Label>{t("date")}</Label>
             <Input
-              type="number"
-              placeholder="Taxa de Retorno (%)"
-              name="returnRate"
-              value={(formData as Investment).returnRate}
+              placeholder={t("date")}
+              type="date"
+              name={type === "fixedCost" ? "dueDate" : "date"}
+              value={
+                type === "fixedCost"
+                  ? (formData as FixedCost).dueDate
+                  : (formData as FinancialTransaction | Investment).date
+              }
               onChange={handleChange}
               className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
             />
+          </div>
+          <div>
+            <Label>{t("description")}</Label>
+            <Input
+              placeholder={t("description")}
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+            />
+          </div>
+          <div>
+            <Label>{t("amount")}</Label>
+            <Input
+              type="number"
+              placeholder={t("amount")}
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+            />
+          </div>
+          {type === "transaction" && (
+            <>
+              <div>
+                <Label>{t("type")}</Label>
+                <select
+                  name="type"
+                  value={(formData as FinancialTransaction).type}
+                  onChange={handleChange}
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded w-full"
+                >
+                  <option value="income">{t("last_incomes")}</option>
+                  <option value="expense">{t("last_expenses")}</option>
+                </select>
+              </div>
+              <div>
+                <Label>{t("category")}</Label>
+                <Input
+                  type="number"
+                  placeholder={t("category")}
+                  name="categoryId"
+                  value={(formData as FinancialTransaction).categoryId}
+                  onChange={handleChange}
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                />
+              </div>
+            </>
+          )}
+          {type === "investment" && (
+            <div>
+              <Label>{t("return_rate")}</Label>
+              <Input
+                type="number"
+                placeholder={t("return_rate")}
+                name="returnRate"
+                value={(formData as Investment).returnRate}
+                onChange={handleChange}
+                className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+              />
+            </div>
           )}
         </div>
         <Button
@@ -170,4 +205,4 @@ const TableDialog: React.FC<TableDialogProps> = ({
   );
 };
 
-export default TableDialog;
+export default TableDialogue;
