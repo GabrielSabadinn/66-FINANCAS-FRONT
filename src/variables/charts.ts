@@ -150,8 +150,8 @@ export const getLineChartDataDashboard = (): RechartsDataPoint[] => {
 
   return months.map((month, index) => ({
     name: month,
-    [t("charts.mobile_apps")]: mobileAppsData[index],
-    [t("charts.websites")]: websitesData[index],
+    [t("user.entries")]: mobileAppsData[index],
+    [t("user.expenses")]: websitesData[index],
   }));
 };
 
@@ -258,7 +258,7 @@ export const getLineChartDataProfile1 = (): RechartsDataPoint[] => {
 
   return months.map((month, index) => ({
     name: month,
-    [t("charts.mobile_apps")]: mobileAppsData[index],
+    [t("user.entries")]: mobileAppsData[index],
   }));
 };
 
@@ -370,7 +370,7 @@ export const getLineChartDataProfile2 = (): RechartsDataPoint[] => {
 
   return months.map((month, index) => ({
     name: month,
-    [t("charts.mobile_apps")]: mobileAppsData[index],
+    [t("user.entries")]: mobileAppsData[index],
   }));
 };
 

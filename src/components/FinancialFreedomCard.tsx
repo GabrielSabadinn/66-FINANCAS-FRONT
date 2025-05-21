@@ -1,12 +1,23 @@
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
 
 interface FinancialFreedomCardProps {
   t: (key: string) => string;
   moneySaved?: number;
   moneyGoal?: number;
   percentage?: number;
+  onGoalUpdate?: (newGoal: number) => void;
 }
 
 export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
@@ -14,7 +25,9 @@ export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
   moneySaved = 0,
   moneyGoal = 1,
   percentage,
+  onGoalUpdate,
 }) => {
+  const { t: translate } = useTranslation();
   const calculatedPercentage = percentage ?? (moneySaved / moneyGoal) * 100;
   const formattedPercentage = Math.round(calculatedPercentage);
 
@@ -22,15 +35,57 @@ export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - calculatedPercentage / 100);
 
+  const [isOpen, setIsOpen] = useState(false);
+  const [newGoal, setNewGoal] = useState(moneyGoal.toString());
+
+  const handleSubmit = () => {
+    const goalValue = parseFloat(newGoal);
+    if (!isNaN(goalValue) && goalValue > 0 && onGoalUpdate) {
+      onGoalUpdate(goalValue);
+    }
+    setIsOpen(false);
+    setNewGoal(moneyGoal.toString());
+  };
+
   return (
     <Card className="bg-[rgb(19,21,54)] border-none">
       <CardHeader className="flex justify-between items-center mb-3 md:mb-4">
         <p className="text-sm text-white font-bold md:text-base">
           {t("financial_freedom")}
         </p>
-        <Button className="w-7 h-7 bg-violet-900 hover:bg-violet-900/90 rounded-xl p-0 md:w-8 md:h-8">
-          <MoreHorizontal className="text-violet-400 w-4 h-4 md:w-5 md:h-5" />
-        </Button>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="w-7 h-7 bg-violet-900 hover:bg-violet-900/90 rounded-xl p-0 md:w-8 md:h-8"
+              aria-label="Set financial goal"
+            >
+              <MoreHorizontal className="text-violet-400 w-4 h-4 md:w-5 md:h-5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-[rgb(30,32,70)] text-white border-none backdrop-blur-md">
+            <DialogHeader>
+              <DialogTitle>{t("set_financial_goal")}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <Input
+                type="number"
+                placeholder={t("new_money_goal")}
+                name="newGoal"
+                value={newGoal}
+                onChange={(e) => setNewGoal(e.target.value)}
+                className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                min="1"
+                step="0.01"
+              />
+            </div>
+            <Button
+              onClick={handleSubmit}
+              className="bg-violet-600 hover:bg-violet-700 text-white"
+            >
+              {t("save")}
+            </Button>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent className="p-4 md:p-6">
         <div className="flex flex-col md:flex-row gap-3">

@@ -85,6 +85,7 @@
   "investments": "Investments",
   "loading": "Loading...",
   "satisfaction_rate_description": "Economy",
+  "set_financial_goal": "Add your financial goal",
   "errors": {
     "name_required": "Name is required",
     "valid_email_required": "Valid email is required",

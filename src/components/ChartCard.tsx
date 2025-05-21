@@ -50,14 +50,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               <Legend wrapperStyle={{ paddingTop: "10px" }} />
               <Line
                 type="monotone"
-                dataKey={t("charts.mobile_apps")}
+                dataKey={t("user.entries")}
                 stroke="#2CD9FF"
                 strokeWidth={2}
                 dot={false}
               />
               <Line
                 type="monotone"
-                dataKey={t("charts.websites")}
+                dataKey={t("user.expenses")}
                 stroke="#582CFF"
                 strokeWidth={2}
                 dot={false}
