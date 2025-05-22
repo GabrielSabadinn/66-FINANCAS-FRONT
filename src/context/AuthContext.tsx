@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -7,12 +8,13 @@ import {
 } from "react";
 import { authService } from "@/services/authService";
 import { jwtDecode } from "jwt-decode";
+import { setAuthToken } from "@/services/apiService";
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  userId: number | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  validateToken: () => Promise<boolean>;
 }
 
 interface JwtPayload {
@@ -28,6 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     !!localStorage.getItem("accessToken")
   );
+  const [userId, setUserId] = useState<number | null>(
+    localStorage.getItem("userId")
+      ? parseInt(localStorage.getItem("userId")!, 10)
+      : null
+  );
 
   const login = async (email: string, password: string) => {
     if (isAuthenticated) {
@@ -40,19 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
-      // Decode JWT to get userId
       const decoded: JwtPayload = jwtDecode(accessToken);
-      const userId = decoded.userId;
-      if (!userId) {
+      const decodedUserId = decoded.userId;
+      if (!decodedUserId) {
         throw new Error("User ID not found in token");
       }
 
-      // Store tokens and userId
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("userId", userId.toString());
+      localStorage.setItem("userId", decodedUserId.toString());
       setIsAuthenticated(true);
-      console.log("Login successful, userId:", userId);
+      setUserId(decodedUserId);
+      setAuthToken(accessToken);
+      console.log("Login successful, userId:", decodedUserId);
     } catch (error: any) {
       console.error("Login error:", error);
       throw new Error(error.message || "Login failed");
@@ -65,40 +72,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
     setIsAuthenticated(false);
+    setUserId(null);
+    setAuthToken(null);
   };
 
-  const validateToken = async (): Promise<boolean> => {
+  const checkTokenValidity = () => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      setIsAuthenticated(false);
+      setUserId(null);
+      return false;
+    }
+
     try {
-      console.log("Validating token...");
-      await authService.validateToken();
-      const accessToken = localStorage.getItem("accessToken");
-      if (accessToken && !localStorage.getItem("userId")) {
-        const decoded: JwtPayload = jwtDecode(accessToken);
-        localStorage.setItem("userId", decoded.userId.toString());
-        console.log("Restored userId:", decoded.userId);
+      const decoded: JwtPayload = jwtDecode(accessToken);
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (decoded.exp < currentTime) {
+        console.log("Token expired, logging out");
+        logout();
+        return false;
       }
       setIsAuthenticated(true);
-      console.log("Token validation successful");
+      setUserId(decoded.userId);
+      setAuthToken(accessToken);
       return true;
     } catch (error) {
-      console.error("Token validation failed:", error);
+      console.error("Invalid token:", error);
       logout();
       return false;
     }
   };
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken");
-    if (accessToken && !isAuthenticated) {
-      console.log("Found accessToken, validating...");
-      validateToken();
-    }
+    checkTokenValidity();
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ isAuthenticated, login, logout, validateToken }}
-    >
+    <AuthContext.Provider value={{ isAuthenticated, userId, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

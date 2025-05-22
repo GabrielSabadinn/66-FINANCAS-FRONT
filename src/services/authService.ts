@@ -1,12 +1,26 @@
+// src/services/authService.ts
 import axios from "axios";
-import { API_ROUTES } from "@/config/apiRoutes";
 
-const BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "http://localhost:3000/api";
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: number;
+    email: string;
+    name?: string;
+  };
+}
+
+interface RefreshResponse {
+  accessToken: string;
+}
 
 interface RegisterPayload {
-  name: string;
   email: string;
   password: string;
+  name?: string;
 }
 
 interface LoginPayload {
@@ -14,91 +28,49 @@ interface LoginPayload {
   password: string;
 }
 
-interface AuthResponse {
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    pwd: string;
-    salt: string;
-    pathImageBanner: string | null;
-    pathImageIcon: string | null;
-    createdAt: string;
-    updatedAt: string;
-  };
-  accessToken: string;
-  refreshToken: string;
-}
-
-interface UserResponse {
-  Id: number; // Ajustado para maiúsculo
-  Name: string; // Ajustado para maiúsculo
-  Email: string; // Ajustado para maiúsculo
-  PathImageBanner: string | null; // Ajustado para maiúsculo
-  PathImageIcon: string | null; // Ajustado para maiúsculo
-  CreatedAt: string; // Ajustado para maiúsculo
-  UpdatedAt: string; // Ajustado para maiúsculo
-}
-
 export const authService = {
   register: async (payload: RegisterPayload): Promise<AuthResponse> => {
     try {
-      const response = await axios.post<AuthResponse>(
-        `${BASE_URL}/${API_ROUTES.AUTH.REGISTER}`,
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/register`,
         payload
       );
       return response.data;
     } catch (error) {
-      throw new Error("Registration failed. Please try again.");
+      throw new Error("Registration failed");
     }
   },
 
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
     try {
-      const response = await axios.post<AuthResponse>(
-        `${BASE_URL}/${API_ROUTES.AUTH.SIGN_IN}`,
-        payload
-      );
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, payload);
       return response.data;
     } catch (error) {
-      throw new Error("Login failed. Please check your credentials.");
+      throw new Error("Invalid email or password");
     }
   },
 
-  validateToken: async (): Promise<void> => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      throw new Error("No token found");
-    }
+  refreshToken: async (refreshToken: string): Promise<RefreshResponse> => {
     try {
-      await axios.get(`${BASE_URL}/users`, {
+      const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        refreshToken,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error("Failed to refresh token");
+    }
+  },
+
+  getUserById: async (userId: number, accessToken: string): Promise<any> => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users/${userId}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
-    } catch (error) {
-      throw new Error("Invalid or expired token");
-    }
-  },
-
-  getUserById: async (
-    userId: number,
-    accessToken: string
-  ): Promise<UserResponse> => {
-    try {
-      const response = await axios.get<UserResponse>(
-        `${BASE_URL}/users/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      console.log("Resposta da API em getUserById:", response.data); // Para depuração
       return response.data;
     } catch (error) {
-      console.error("Erro em getUserById:", error);
-      throw new Error("Failed to fetch user data.");
+      throw new Error("Failed to fetch user");
     }
   },
 };

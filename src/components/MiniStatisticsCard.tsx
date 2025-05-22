@@ -1,3 +1,4 @@
+// src/components/MiniStatisticsCard.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon, Mic, Plus, Edit2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -14,14 +15,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 
-// Interface para os dados do formulário
 interface FormData {
   description: string;
   amount: number;
   type: "income" | "expense";
 }
 
-// Props do componente
 interface MiniStatisticsCardProps {
   title: string;
   value: number | string;
@@ -53,7 +52,6 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
   });
   const [isListening, setIsListening] = useState(false);
 
-  // Verifica suporte ao SpeechRecognition
   const hasSpeechRecognition =
     "SpeechRecognition" in window || "webkitSpeechRecognition" in window;
   const SpeechRecognition =
@@ -63,7 +61,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
   if (recognition) {
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = t("language_code") || "en-US"; // Usa idioma do i18next
+    recognition.lang = t("language_code") || "en-US";
   }
 
   const formattedValue =
@@ -84,15 +82,19 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
   };
 
   const handleAddSubmit = () => {
-    if (onAdd) {
-      onAdd({
-        description: formData.description,
-        amount: formData.amount,
-        type: title === t("today_money") ? formData.type : undefined,
-      });
+    if (formData.description && formData.amount > 0) {
+      if (onAdd) {
+        onAdd({
+          description: formData.description,
+          amount: formData.amount,
+          type: title === t("today_money") ? formData.type : undefined,
+        });
+      }
+      setIsOpen(false);
+      setFormData({ description: "", amount: 0, type: "income" });
+    } else {
+      toast.error(t("errors.invalid_input"));
     }
-    setIsOpen(false);
-    setFormData({ description: "", amount: 0, type: "income" });
   };
 
   const handleVoiceInput = () => {
@@ -110,16 +112,14 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
 
       let description = transcript;
       let amount = 0;
-      let type: "income" | "expense" = "expense"; // Padrão: despesa
+      let type: "income" | "expense" = "expense";
 
-      // Extrai o valor numérico
       const numberMatch = transcript.match(/\d+/);
       if (numberMatch) {
         amount = parseInt(numberMatch[0], 10);
         description = transcript.replace(numberMatch[0], "").trim();
       }
 
-      // Detecta tipo com base em palavras-chave
       if (
         transcript.includes("income") ||
         transcript.includes("salary") ||
@@ -130,14 +130,16 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
         type = "income";
       }
 
-      // Envia a transação automaticamente
-      onAdd({
-        description: description || "Voice transaction",
-        amount: amount || 0,
-        type: title === t("today_money") ? type : undefined,
-      });
-
-      toast.success(t("success.transaction_created"));
+      if (description && amount > 0) {
+        onAdd({
+          description: description || "Voice transaction",
+          amount,
+          type: title === t("today_money") ? type : undefined,
+        });
+        toast.success(t("success.transaction_created"));
+      } else {
+        toast.error(t("errors.invalid_voice_input"));
+      }
       setIsListening(false);
     };
 

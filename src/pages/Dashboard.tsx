@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { MiniStatisticsCard } from "../components/MiniStatisticsCard";
@@ -11,72 +12,28 @@ import {
   getBarChartDataDashboard,
   getLineChartDataDashboard,
 } from "@/variables/charts";
-
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
+import {
+  fetchBalance,
+  fetchTransactions,
+  createTransaction,
+} from "@/services/apiService";
 
 interface FinancialTransaction {
   id: number;
-  date: string;
-  description: string;
-  amount: number;
-  type: "income" | "expense";
-  categoryId: number;
   userId: number;
+  entryType: "C" | "D";
+  entryId: number;
+  value: number;
+  description: string;
+  date: string;
+  created_at?: string;
 }
-
-// Mocked data
-const mockTransactions: FinancialTransaction[] = [
-  {
-    id: 1,
-    date: "2025-05-01",
-    description: "Salary",
-    amount: 5000,
-    type: "income",
-    categoryId: 1,
-    userId: 1,
-  },
-  {
-    id: 2,
-    date: "2025-05-02",
-    description: "Rent",
-    amount: 1500,
-    type: "expense",
-    categoryId: 2,
-    userId: 1,
-  },
-  {
-    id: 3,
-    date: "2025-05-03",
-    description: "Groceries",
-    amount: 200,
-    type: "expense",
-    categoryId: 3,
-    userId: 1,
-  },
-  {
-    id: 4,
-    date: "2025-05-04",
-    description: "Investment",
-    amount: 1000,
-    type: "expense",
-    categoryId: 4,
-    userId: 1,
-  },
-  {
-    id: 5,
-    date: "2025-05-05",
-    description: "Utility Bill",
-    amount: 300,
-    type: "expense",
-    categoryId: 5,
-    userId: 1,
-  },
-];
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, userId, logout } = useAuth();
   const barData = getBarChartDataDashboard();
   const lineData = getLineChartDataDashboard();
 
@@ -87,49 +44,26 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchTransactions();
+    if (isAuthenticated && userId) {
+      fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, userId]);
 
-  const fetchTransactions = async () => {
+  const fetchData = async () => {
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("Fetching mocked transactions...");
-
-      const storedUserId = localStorage.getItem("userId");
-      if (!storedUserId) {
-        throw new Error("No user ID found in localStorage");
+      if (!userId) {
+        throw new Error("No user ID found");
       }
-      const parsedUserId = parseInt(storedUserId, 10);
 
-      // Filter transactions by userId to simulate server-side filtering
-      const validTransactions: FinancialTransaction[] = mockTransactions.filter(
-        (transaction) =>
-          transaction.userId === parsedUserId &&
-          transaction.id != null &&
-          transaction.amount != null &&
-          transaction.date != null &&
-          transaction.type != null &&
-          transaction.categoryId != null
-      );
+      // Fetch balance
+      const balanceData = await fetchBalance(userId);
+      setTodayMoney(balanceData.balance);
 
+      // Fetch transactions
+      const validTransactions = await fetchTransactions(userId);
       setTransactions(validTransactions);
-
-      // Calculate todayMoney
-      const balance = validTransactions.reduce((sum, transaction) => {
-        return transaction.type === "income"
-          ? sum + transaction.amount
-          : sum - transaction.amount;
-      }, 0);
-      setTodayMoney(balance);
     } catch (err) {
-      console.error("Failed to fetch transactions:", err);
-      const error = err as Error;
-      if (error.message === "No user ID found in localStorage") {
-        logout();
-      }
+      console.error("Failed to fetch data:", err);
       toast.error(t("errors.fetch_transactions_failed"));
     }
   };
@@ -138,36 +72,32 @@ export default function Dashboard() {
     title: string,
     data: { description: string; amount: number; type?: "income" | "expense" }
   ) => {
-    console.log(`Adicionando para ${title}:`, data);
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       logout();
       return;
     }
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const storedUserId = localStorage.getItem("userId");
-      if (!storedUserId) {
-        throw new Error("No user ID found in localStorage");
-      }
-      const parsedUserId = parseInt(storedUserId, 10);
-
-      const newTransaction: FinancialTransaction = {
-        id: transactions.length
-          ? Math.max(...transactions.map((t) => t.id)) + 1
-          : 1,
-        date: new Date().toISOString().split("T")[0],
-        description: data.description,
-        amount: data.amount,
-        type: data.type || "expense",
-        categoryId: 1, // Default category ID
-        userId: parsedUserId,
+      const entryIdMap: { [key: string]: number } = {
+        [t("today_money")]: 1, // Transactions
+        [t("future_money")]: 4, // Payments
+        [t("investments_money")]: 2, // Investments
+        [t("fixed_costs")]: 3, // Fixed costs
       };
 
-      setTransactions([...transactions, newTransaction]);
+      const newTransaction: Omit<FinancialTransaction, "id" | "created_at"> = {
+        userId,
+        entryType: data.type === "income" ? "C" : "D",
+        entryId: entryIdMap[title] || 1,
+        value: data.amount,
+        description: data.description,
+        date: new Date().toISOString(),
+      };
 
+      const createdTransaction = await createTransaction(newTransaction);
+      setTransactions([...transactions, createdTransaction]);
+
+      // Update state based on title
       if (title === t("today_money")) {
         setTodayMoney((prev) =>
           data.type === "income" ? prev + data.amount : prev - data.amount
@@ -264,7 +194,7 @@ export default function Dashboard() {
           data={barData}
         />
       </div>
-      <TransactionTable />
+      <TransactionTable transactions={transactions} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+// src/components/TransactionTable.tsx
 import { useTranslation } from "react-i18next";
 import {
   Table,
@@ -14,71 +14,30 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
-import { useAuth } from "@/context/AuthContext";
+
+import { useState, useEffect } from "react";
 
 interface FinancialTransaction {
   id: number;
-  date: string;
-  description: string;
-  amount: number;
-  type: "income" | "expense";
-  categoryId: number;
   userId: number;
-}
-
-interface Investment {
-  id: number;
+  entryType: "C" | "D";
+  entryId: number;
+  value: number;
+  description: string;
   date: string;
-  description: string;
-  amount: number;
-  returnRate: number;
+  created_at?: string;
 }
 
-interface FixedCost {
-  id: number;
-  description: string;
-  amount: number;
-  dueDate: string;
+interface TransactionTableProps {
+  transactions: FinancialTransaction[];
 }
 
-// Mocked data
-const mockTransactions: FinancialTransaction[] = [
-  {
-    id: 1,
-    date: "2025-05-01",
-    description: "Salary",
-    amount: 5000,
-    type: "income",
-    categoryId: 1,
-    userId: 1,
-  },
-  {
-    id: 2,
-    date: "2025-05-02",
-    description: "Rent",
-    amount: 1500,
-    type: "expense",
-    categoryId: 2,
-    userId: 1,
-  },
-  {
-    id: 3,
-    date: "2025-05-03",
-    description: "Groceries",
-    amount: 200,
-    type: "expense",
-    categoryId: 3,
-    userId: 1,
-  },
-];
-
-const TransactionTable: React.FC = () => {
+const TransactionTable: React.FC<TransactionTableProps> = ({
+  transactions,
+}) => {
   const { t } = useTranslation();
-  const { isAuthenticated, logout } = useAuth();
-  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [filteredTransactions, setFilteredTransactions] =
+    useState<FinancialTransaction[]>(transactions);
   const [filters, setFilters] = useState({
     month: "",
     minAmount: "",
@@ -88,78 +47,8 @@ const TransactionTable: React.FC = () => {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchTransactions();
-    }
-  }, [isAuthenticated]);
-
-  const fetchTransactions = async () => {
-    console.log(
-      "Starting fetchTransactions, isAuthenticated:",
-      isAuthenticated
-    );
-    if (!isAuthenticated) {
-      console.log("User not authenticated");
-      setError(t("errors.user_not_authenticated") || "User not authenticated");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const storedUserId = localStorage.getItem("userId");
-      console.log("Stored userId:", storedUserId);
-      if (!storedUserId) {
-        throw new Error("No user ID found in localStorage");
-      }
-      const parsedUserId = parseInt(storedUserId, 10);
-      console.log("Parsed userId:", parsedUserId);
-      setUserId(parsedUserId);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("Fetching mocked transactions...");
-
-      // Filter transactions by userId to simulate server-side filtering
-      const validTransactions = mockTransactions.filter(
-        (transaction) =>
-          transaction.userId === parsedUserId &&
-          transaction.id != null &&
-          transaction.amount != null &&
-          transaction.date != null &&
-          transaction.type != null &&
-          transaction.categoryId != null
-      );
-
-      if (validTransactions.length !== mockTransactions.length) {
-        toast.warn(
-          t("warnings.invalid_transactions_filtered", {
-            count: mockTransactions.length - validTransactions.length,
-          }) ||
-            `Filtered out ${
-              mockTransactions.length - validTransactions.length
-            } invalid transactions`
-        );
-      }
-      setTransactions(validTransactions);
-      setError(null);
-    } catch (err) {
-      console.error("Error in fetchTransactions:", err);
-      const error = err as Error;
-      if (error.message === "No user ID found in localStorage") {
-        console.log("Logging out due to missing user ID");
-        logout();
-      }
-      setError(
-        t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
-      );
-      toast.error(
-        t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    setFilteredTransactions(transactions);
+  }, [transactions]);
 
   const filterTransactions = (t: FinancialTransaction) => {
     const date = new Date(t.date);
@@ -167,10 +56,10 @@ const TransactionTable: React.FC = () => {
       ? date.getMonth() + 1 === parseInt(filters.month)
       : true;
     const minAmountMatch = filters.minAmount
-      ? t.amount >= parseFloat(filters.minAmount)
+      ? t.value >= parseFloat(filters.minAmount)
       : true;
     const maxAmountMatch = filters.maxAmount
-      ? t.amount <= parseFloat(filters.maxAmount)
+      ? t.value <= parseFloat(filters.maxAmount)
       : true;
     const startDateMatch = filters.startDate
       ? new Date(t.date) >= new Date(filters.startDate)
@@ -187,74 +76,23 @@ const TransactionTable: React.FC = () => {
     );
   };
 
-  const filteredTransactions = transactions.filter(filterTransactions);
-
-  const handleSave = async (
-    item: FinancialTransaction | Investment | FixedCost,
-    isEdit: boolean
-  ) => {
-    try {
-      const transactionItem = item as FinancialTransaction;
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      if (isEdit) {
-        const updatedTransaction = { ...transactionItem };
-        setTransactions(
-          transactions.map((t) =>
-            t.id === transactionItem.id ? updatedTransaction : t
-          )
-        );
-        toast.success(
-          t("success.transaction_updated") || "Transaction updated successfully"
-        );
-      } else {
-        const newTransaction = {
-          ...transactionItem,
-          id: transactions.length
-            ? Math.max(...transactions.map((t) => t.id)) + 1
-            : 1,
-          userId: userId || 0,
-        };
-        setTransactions([...transactions, newTransaction]);
-        toast.success(
-          t("success.transaction_created") || "Transaction created successfully"
-        );
-      }
-      setError(null);
-    } catch (err) {
-      console.error("Error in handleSave:", err);
-      setError(
-        t("errors.save_transaction_failed") || "Failed to save transaction"
-      );
-      toast.error(
-        t("errors.save_transaction_failed") || "Failed to save transaction"
-      );
-    }
-  };
+  const filtered = filteredTransactions.filter(filterTransactions);
 
   const handleDelete = async (id: number) => {
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setTransactions(transactions.filter((t) => t.id !== id));
-      setError(null);
+      //    await deleteTransaction(id);
+      setFilteredTransactions(filteredTransactions.filter((t) => t.id !== id));
       toast.success(
         t("success.transaction_deleted") || "Transaction deleted successfully"
       );
     } catch (err) {
       console.error("Error in handleDelete:", err);
-      setError(
-        t("errors.delete_transaction_failed") || "Failed to delete transaction"
-      );
       toast.error(
         t("errors.delete_transaction_failed") || "Failed to delete transaction"
       );
     }
   };
 
-  // Define months array to avoid reliance on t("charts.months") directly
   const months = [
     { value: "1", label: t("charts.months.jan") || "January" },
     { value: "2", label: t("charts.months.feb") || "February" },
@@ -269,18 +107,6 @@ const TransactionTable: React.FC = () => {
     { value: "11", label: t("charts.months.nov") || "November" },
     { value: "12", label: t("charts.months.dec") || "December" },
   ];
-
-  if (loading) {
-    return (
-      <div className="text-white text-center py-4">
-        {t("loading") || "Loading..."}
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-center py-4">{error}</div>;
-  }
 
   return (
     <Card className="bg-[rgb(19,21,54)] border-none shadow-lg rounded-lg">
@@ -386,26 +212,27 @@ const TransactionTable: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTransactions.map((transaction) => (
+            {filtered.map((transaction) => (
               <TableRow
                 key={transaction.id}
                 className="border-b border-[rgb(40,42,80)] hover:bg-[rgb(30,32,70)]"
               >
                 <TableCell className="py-3">
-                  {transaction.date || "N/A"}
+                  {new Date(transaction.date).toLocaleDateString("pt-BR") ||
+                    "N/A"}
                 </TableCell>
                 <TableCell className="py-3">
                   {transaction.description || "N/A"}
                 </TableCell>
                 <TableCell
                   className={`py-3 ${
-                    transaction.type === "income"
+                    transaction.entryType === "C"
                       ? "text-green-400"
                       : "text-red-500"
                   }`}
                 >
-                  {typeof transaction.amount === "number"
-                    ? transaction.amount.toLocaleString("pt-BR", {
+                  {typeof transaction.value === "number"
+                    ? transaction.value.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })
@@ -413,10 +240,10 @@ const TransactionTable: React.FC = () => {
                 </TableCell>
                 <TableCell className="py-3">
                   {t(
-                    transaction.type === "income"
+                    transaction.entryType === "C"
                       ? "last_incomes"
                       : "last_expenses"
-                  ) || (transaction.type === "income" ? "Income" : "Expense")}
+                  ) || (transaction.entryType === "C" ? "Income" : "Expense")}
                 </TableCell>
                 <TableCell className="py-3">
                   <Button

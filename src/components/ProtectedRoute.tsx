@@ -1,30 +1,25 @@
+// src/components/ProtectedRoute.tsx
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 
 export default function ProtectedRoute() {
-  const { isAuthenticated, validateToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isValidating, setIsValidating] = useState(true);
-  const [isValid, setIsValid] = useState(isAuthenticated);
 
   useEffect(() => {
-    const checkToken = async () => {
-      const valid = await validateToken();
-      setIsValid(valid);
+    // AuthContext's checkTokenValidity runs on mount, so we just wait briefly
+    const timer = setTimeout(() => {
       setIsValidating(false);
-    };
-    if (isAuthenticated) {
-      checkToken();
-    } else {
-      setIsValidating(false);
-    }
-  }, [isAuthenticated, validateToken]);
+    }, 100); // Small delay to ensure AuthContext has initialized
+    return () => clearTimeout(timer);
+  }, []);
 
   if (isValidating) {
     return <div>Loading...</div>;
   }
 
-  if (!isValid) {
+  if (!isAuthenticated) {
     return <Navigate to="/auth/signin" replace />;
   }
 
