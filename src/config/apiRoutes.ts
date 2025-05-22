@@ -10,4 +10,8 @@ export const API_ROUTES = {
     BASE: "transactions",
     BY_ID: "transactions/:id",
   },
+  INVESTMENTS: {
+    BASE: "investments",
+    BY_ID: "investments/:id",
+  },
 };

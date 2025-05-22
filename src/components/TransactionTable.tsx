@@ -222,7 +222,7 @@ const TransactionTable: React.FC = () => {
           <CardTitle className="text-2xl text-white">
             {t("recent_transactions")}
           </CardTitle>
-          <TableDialog
+          {/*       <TableDialog
             type="transaction"
             onSave={handleSave}
             initialData={{
@@ -234,7 +234,7 @@ const TransactionTable: React.FC = () => {
               categoryId: 1, // Default category ID, adjust as needed
               userId: 0, // Will be set by the backend
             }}
-          />
+          /> */}
         </div>
       </CardHeader>
       <CardContent>
@@ -356,11 +356,11 @@ const TransactionTable: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell className="flex gap-2">
-                  <TableDialog
+                  {/*        <TableDialog
                     type="transaction"
                     onSave={handleSave}
                     initialData={transaction}
-                  />
+                  /> */}
                   <Button
                     variant="ghost"
                     size="sm"

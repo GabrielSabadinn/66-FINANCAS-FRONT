@@ -24,10 +24,15 @@ interface FinancialTransaction {
 
 interface Investment {
   id: number;
-  date: string;
-  description: string;
-  amount: number;
-  returnRate: number;
+  UserId: number;
+  CategoryId: number;
+  CategoryName: string;
+  Date: string;
+  Description: string | null;
+  Amount: number;
+  ReturnPercentage: number;
+  CreatedAt: string;
+  UpdatedAt: string;
 }
 
 interface FixedCost {
@@ -40,10 +45,10 @@ interface FixedCost {
 interface TableDialogProps {
   type: "transaction" | "investment" | "fixedCost";
   onSave: (
-    item: FinancialTransaction | Investment | FixedCost,
+    item: Partial<FinancialTransaction | Investment | FixedCost>,
     isEdit: boolean
-  ) => void;
-  initialData: FinancialTransaction | Investment | FixedCost;
+  ) => Promise<void> | void;
+  initialData: Partial<FinancialTransaction | Investment | FixedCost>;
 }
 
 const TableDialogue: React.FC<TableDialogProps> = ({
@@ -64,14 +69,16 @@ const TableDialogue: React.FC<TableDialogProps> = ({
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "amount" || name === "returnRate" || name === "categoryId"
+        name === "amount" ||
+        name === "ReturnPercentage" ||
+        name === "CategoryId"
           ? Number(value)
           : value,
     }));
   };
 
-  const handleSubmit = () => {
-    onSave(formData, isEdit);
+  const handleSubmit = async () => {
+    await onSave(formData, isEdit);
     setIsOpen(false);
     if (!isEdit) {
       setFormData(initialData);
@@ -122,11 +129,19 @@ const TableDialogue: React.FC<TableDialogProps> = ({
             <Input
               placeholder={t("date")}
               type="date"
-              name={type === "fixedCost" ? "dueDate" : "date"}
+              name={
+                type === "fixedCost"
+                  ? "dueDate"
+                  : type === "investment"
+                  ? "Date"
+                  : "date"
+              }
               value={
                 type === "fixedCost"
-                  ? (formData as FixedCost).dueDate
-                  : (formData as FinancialTransaction | Investment).date
+                  ? (formData as Partial<FixedCost>).dueDate || ""
+                  : type === "investment"
+                  ? (formData as Partial<Investment>).Date || ""
+                  : (formData as Partial<FinancialTransaction>).date || ""
               }
               onChange={handleChange}
               className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
@@ -136,8 +151,13 @@ const TableDialogue: React.FC<TableDialogProps> = ({
             <Label>{t("description")}</Label>
             <Input
               placeholder={t("description")}
-              name="description"
-              value={formData.description}
+              name={type === "investment" ? "Description" : "description"}
+              value={
+                type === "investment"
+                  ? (formData as Partial<Investment>).Description || ""
+                  : (formData as Partial<FinancialTransaction | FixedCost>)
+                      .description || ""
+              }
               onChange={handleChange}
               className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
             />
@@ -147,8 +167,13 @@ const TableDialogue: React.FC<TableDialogProps> = ({
             <Input
               type="number"
               placeholder={t("amount")}
-              name="amount"
-              value={formData.amount}
+              name={type === "investment" ? "Amount" : "amount"}
+              value={
+                type === "investment"
+                  ? (formData as Partial<Investment>).Amount || ""
+                  : (formData as Partial<FinancialTransaction | FixedCost>)
+                      .amount || ""
+              }
               onChange={handleChange}
               className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
             />
@@ -159,7 +184,7 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                 <Label>{t("type")}</Label>
                 <select
                   name="type"
-                  value={(formData as FinancialTransaction).type}
+                  value={(formData as Partial<FinancialTransaction>).type || ""}
                   onChange={handleChange}
                   className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded w-full"
                 >
@@ -173,7 +198,9 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                   type="number"
                   placeholder={t("category")}
                   name="categoryId"
-                  value={(formData as FinancialTransaction).categoryId}
+                  value={
+                    (formData as Partial<FinancialTransaction>).categoryId || ""
+                  }
                   onChange={handleChange}
                   className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
                 />
@@ -181,17 +208,32 @@ const TableDialogue: React.FC<TableDialogProps> = ({
             </>
           )}
           {type === "investment" && (
-            <div>
-              <Label>{t("return_rate")}</Label>
-              <Input
-                type="number"
-                placeholder={t("return_rate")}
-                name="returnRate"
-                value={(formData as Investment).returnRate}
-                onChange={handleChange}
-                className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
-              />
-            </div>
+            <>
+              <div>
+                <Label>{t("return_rate")}</Label>
+                <Input
+                  type="number"
+                  placeholder={t("return_rate")}
+                  name="ReturnPercentage"
+                  value={
+                    (formData as Partial<Investment>).ReturnPercentage || ""
+                  }
+                  onChange={handleChange}
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                />
+              </div>
+              <div>
+                <Label>{t("category")}</Label>
+                <Input
+                  type="number"
+                  placeholder={t("category")}
+                  name="CategoryId"
+                  value={(formData as Partial<Investment>).CategoryId || ""}
+                  onChange={handleChange}
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                />
+              </div>
+            </>
           )}
         </div>
         <Button

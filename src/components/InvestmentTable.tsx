@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// components/InvestmentTable.tsx
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Table,
@@ -13,36 +14,30 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Pencil, Trash2 } from "lucide-react";
-import TableDialog from "@/components/TableDialog";
-
+import TableDialogue from "@/components/TableDialog";
+import { useAuth } from "@/context/AuthContext";
+import { investmentService } from "@/services/investmentService";
+import { authService } from "@/services/authService";
 interface Investment {
   id: number;
-  date: string;
-  description: string;
-  amount: number;
-  returnRate: number;
+  UserId: number;
+  CategoryId: number;
+  CategoryName: string;
+  Date: string;
+  Description: string | null;
+  Amount: number;
+  ReturnPercentage: number;
+  CreatedAt: string;
+  UpdatedAt: string;
 }
-
-const mockInvestments: Investment[] = [
-  {
-    id: 1,
-    date: "2025-01-15",
-    description: "Tesouro Direto",
-    amount: 1000,
-    returnRate: 5.5,
-  },
-  {
-    id: 2,
-    date: "2025-02-20",
-    description: "Ações B3",
-    amount: 2000,
-    returnRate: 8.0,
-  },
-];
 
 const InvestmentTable: React.FC = () => {
   const { t } = useTranslation();
-  const [investments, setInvestments] = useState<Investment[]>(mockInvestments);
+  const { isAuthenticated, logout, validateToken } = useAuth();
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     month: "",
     minAmount: "",
@@ -50,23 +45,75 @@ const InvestmentTable: React.FC = () => {
     startDate: "",
     endDate: "",
   });
+  // components/InvestmentTable.tsx
+  // components/InvestmentTable.tsx
+  useEffect(() => {
+    const fetchUserAndInvestments = async () => {
+      console.log(
+        "Starting fetchUserAndInvestments, isAuthenticated:",
+        isAuthenticated
+      );
+      if (!isAuthenticated) {
+        console.log("User not authenticated");
+        setError("User not authenticated");
+        setLoading(false);
+        return;
+      }
 
+      try {
+        console.log("Validating token...");
+        await validateToken();
+        const accessToken = localStorage.getItem("accessToken");
+        console.log("Access token:", accessToken ? "Present" : "Missing");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+
+        const storedUserId = localStorage.getItem("userId");
+        console.log("Stored userId:", storedUserId);
+        if (!storedUserId) {
+          throw new Error("No user ID found in localStorage");
+        }
+        const userId = parseInt(storedUserId, 10);
+        console.log("Parsed userId:", userId);
+        setUserId(userId);
+
+        console.log("Fetching investments...");
+        const fetchedInvestments = await investmentService.getAllInvestments(
+          accessToken
+        );
+        console.log("Fetched investments:", fetchedInvestments);
+        setInvestments(fetchedInvestments);
+        setLoading(false);
+      } catch (err: any) {
+        console.error("Error in fetchUserAndInvestments:", err);
+        setError(err.message || "Failed to fetch investments");
+        setLoading(false);
+        if (err.message.includes("Invalid or expired token")) {
+          console.log("Logging out due to invalid token");
+          logout();
+        }
+      }
+    };
+
+    fetchUserAndInvestments();
+  }, [isAuthenticated, validateToken, logout]);
   const filterInvestments = (i: Investment) => {
-    const date = new Date(i.date);
+    const date = new Date(i.Date);
     const monthMatch = filters.month
       ? date.getMonth() + 1 === parseInt(filters.month)
       : true;
     const minAmountMatch = filters.minAmount
-      ? i.amount >= parseFloat(filters.minAmount)
+      ? i.Amount >= parseFloat(filters.minAmount)
       : true;
     const maxAmountMatch = filters.maxAmount
-      ? i.amount <= parseFloat(filters.maxAmount)
+      ? i.Amount <= parseFloat(filters.maxAmount)
       : true;
     const startDateMatch = filters.startDate
-      ? new Date(i.date) >= new Date(filters.startDate)
+      ? new Date(i.Date) >= new Date(filters.startDate)
       : true;
     const endDateMatch = filters.endDate
-      ? new Date(i.date) <= new Date(filters.endDate)
+      ? new Date(i.Date) <= new Date(filters.endDate)
       : true;
     return (
       monthMatch &&
@@ -79,18 +126,63 @@ const InvestmentTable: React.FC = () => {
 
   const filteredInvestments = investments.filter(filterInvestments);
 
-  const handleSave = (item: Investment, isEdit: boolean) => {
-    if (isEdit) {
-      setInvestments(investments.map((i) => (i.id === item.id ? item : i)));
-    } else {
-      const id = investments.length + 1;
-      setInvestments([...investments, { ...item, id }]);
+  const handleSave = async (item: Partial<Investment>, isEdit: boolean) => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken || !userId) {
+        throw new Error("Not authenticated");
+      }
+
+      const payload = { ...item, UserId: userId };
+      console.log("Saving investment, payload:", payload);
+      if (isEdit && item.id) {
+        const updatedInvestment = await investmentService.updateInvestment(
+          item.id,
+          payload,
+          accessToken
+        );
+        console.log("Updated investment:", updatedInvestment);
+        setInvestments(
+          investments.map((i) => (i.id === item.id ? updatedInvestment : i))
+        );
+      } else {
+        const newInvestment = await investmentService.createInvestment(
+          payload,
+          accessToken
+        );
+        console.log("Created investment:", newInvestment);
+        setInvestments([...investments, newInvestment]);
+      }
+    } catch (err: any) {
+      console.error("Error saving investment:", err);
+      setError(err.message || "Failed to save investment");
     }
   };
 
-  const handleDelete = (id: number) => {
-    setInvestments(investments.filter((i) => i.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken || !userId) {
+        throw new Error("Not authenticated");
+      }
+
+      console.log("Deleting investment with id:", id);
+      await investmentService.deleteInvestment(id, accessToken);
+      console.log("Investment deleted successfully");
+      setInvestments(investments.filter((i) => i.id !== id));
+    } catch (err: any) {
+      console.error("Error deleting investment:", err);
+      setError(err.message || "Failed to delete investment");
+    }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <Card className="bg-[rgb(19,21,54)] border-none">
@@ -99,17 +191,22 @@ const InvestmentTable: React.FC = () => {
           <CardTitle className="text-2xl text-white">
             {t("investments_money")}
           </CardTitle>
-          {/*   <TableDialog
+          <TableDialogue
             type="investment"
             onSave={handleSave}
             initialData={{
               id: 0,
-              date: "",
-              description: "",
-              amount: 0,
-              returnRate: 0,
+              Date: "",
+              Description: "",
+              Amount: 0,
+              ReturnPercentage: 0,
+              CategoryId: 0,
+              CategoryName: "",
+              UserId: userId || 0,
+              CreatedAt: "",
+              UpdatedAt: "",
             }}
-          /> */}
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -133,7 +230,7 @@ const InvestmentTable: React.FC = () => {
                         2025,
                         Object.keys(
                           t("charts.months", { returnObjects: true })
-                        ).indexOf(key) + 1,
+                        ).indexOf(key),
                         1
                       ).getMonth() + 1
                     )}
@@ -207,21 +304,23 @@ const InvestmentTable: React.FC = () => {
                 key={investment.id}
                 className="border-b border-[rgb(40,42,80)]"
               >
-                <TableCell>{investment.date}</TableCell>
-                <TableCell>{investment.description}</TableCell>
+                <TableCell>{investment.Date}</TableCell>
+                <TableCell>
+                  {investment.CategoryName || investment.Description}
+                </TableCell>
                 <TableCell className="text-green-400">
-                  {investment.amount.toLocaleString("pt-BR", {
+                  {investment.Amount.toLocaleString("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   })}
                 </TableCell>
-                <TableCell>{investment.returnRate}%</TableCell>
+                <TableCell>{investment.ReturnPercentage}%</TableCell>
                 <TableCell className="flex gap-2">
-                  {/*      <TableDialog
+                  <TableDialogue
                     type="investment"
                     onSave={handleSave}
                     initialData={investment}
-                  /> */}
+                  />
                   <Button
                     variant="ghost"
                     size="sm"
