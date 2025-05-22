@@ -11,9 +11,8 @@ import {
   getBarChartDataDashboard,
   getLineChartDataDashboard,
 } from "@/variables/charts";
-import { transactionService } from "@/services/transactionService";
+
 import { useAuth } from "@/context/AuthContext";
-import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 
 interface FinancialTransaction {
@@ -25,6 +24,55 @@ interface FinancialTransaction {
   categoryId: number;
   userId: number;
 }
+
+// Mocked data
+const mockTransactions: FinancialTransaction[] = [
+  {
+    id: 1,
+    date: "2025-05-01",
+    description: "Salary",
+    amount: 5000,
+    type: "income",
+    categoryId: 1,
+    userId: 1,
+  },
+  {
+    id: 2,
+    date: "2025-05-02",
+    description: "Rent",
+    amount: 1500,
+    type: "expense",
+    categoryId: 2,
+    userId: 1,
+  },
+  {
+    id: 3,
+    date: "2025-05-03",
+    description: "Groceries",
+    amount: 200,
+    type: "expense",
+    categoryId: 3,
+    userId: 1,
+  },
+  {
+    id: 4,
+    date: "2025-05-04",
+    description: "Investment",
+    amount: 1000,
+    type: "expense",
+    categoryId: 4,
+    userId: 1,
+  },
+  {
+    id: 5,
+    date: "2025-05-05",
+    description: "Utility Bill",
+    amount: 300,
+    type: "expense",
+    categoryId: 5,
+    userId: 1,
+  },
+];
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -46,20 +94,25 @@ export default function Dashboard() {
 
   const fetchTransactions = async () => {
     try {
-      const data = await transactionService.getAllTransactions();
-      console.log("Dashboard transactions:", data);
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log("Fetching mocked transactions...");
 
-      // Transform API response
-      const validTransactions: FinancialTransaction[] = data.map(
-        (transaction: any) => ({
-          id: transaction.Id,
-          userId: transaction.UserId,
-          categoryId: transaction.CategoryId,
-          date: new Date(transaction.Date).toISOString().split("T")[0],
-          description: transaction.Description || "",
-          amount: transaction.Amount ?? 0,
-          type: transaction.Type ?? "income",
-        })
+      const storedUserId = localStorage.getItem("userId");
+      if (!storedUserId) {
+        throw new Error("No user ID found in localStorage");
+      }
+      const parsedUserId = parseInt(storedUserId, 10);
+
+      // Filter transactions by userId to simulate server-side filtering
+      const validTransactions: FinancialTransaction[] = mockTransactions.filter(
+        (transaction) =>
+          transaction.userId === parsedUserId &&
+          transaction.id != null &&
+          transaction.amount != null &&
+          transaction.date != null &&
+          transaction.type != null &&
+          transaction.categoryId != null
       );
 
       setTransactions(validTransactions);
@@ -72,16 +125,11 @@ export default function Dashboard() {
       }, 0);
       setTodayMoney(balance);
     } catch (err) {
-      const error = err as Error | AxiosError;
-      if (error.message === "No access token found") {
-        logout();
-      } else if (
-        error instanceof AxiosError &&
-        error.response?.status === 401
-      ) {
+      console.error("Failed to fetch transactions:", err);
+      const error = err as Error;
+      if (error.message === "No user ID found in localStorage") {
         logout();
       }
-      console.error("Failed to fetch transactions:", err);
       toast.error(t("errors.fetch_transactions_failed"));
     }
   };
@@ -97,18 +145,27 @@ export default function Dashboard() {
     }
 
     try {
-      const transactionData = {
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const storedUserId = localStorage.getItem("userId");
+      if (!storedUserId) {
+        throw new Error("No user ID found in localStorage");
+      }
+      const parsedUserId = parseInt(storedUserId, 10);
+
+      const newTransaction: FinancialTransaction = {
+        id: transactions.length
+          ? Math.max(...transactions.map((t) => t.id)) + 1
+          : 1,
         date: new Date().toISOString().split("T")[0],
         description: data.description,
         amount: data.amount,
         type: data.type || "expense",
-        categoryId: 1, // Default category ID, adjust as needed
-        userId: 0, // Will be set by the backend
+        categoryId: 1, // Default category ID
+        userId: parsedUserId,
       };
 
-      const newTransaction = await transactionService.createTransaction(
-        transactionData
-      );
       setTransactions([...transactions, newTransaction]);
 
       if (title === t("today_money")) {

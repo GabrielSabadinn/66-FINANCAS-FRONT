@@ -12,12 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2 } from "lucide-react";
-import TableDialog from "@/components/TableDialog";
-import { transactionService } from "@/services/transactionService";
-import { useAuth } from "@/context/AuthContext";
-import { AxiosError } from "axios";
+import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
+import { useAuth } from "@/context/AuthContext";
 
 interface FinancialTransaction {
   id: number;
@@ -44,9 +41,40 @@ interface FixedCost {
   dueDate: string;
 }
 
+// Mocked data
+const mockTransactions: FinancialTransaction[] = [
+  {
+    id: 1,
+    date: "2025-05-01",
+    description: "Salary",
+    amount: 5000,
+    type: "income",
+    categoryId: 1,
+    userId: 1,
+  },
+  {
+    id: 2,
+    date: "2025-05-02",
+    description: "Rent",
+    amount: 1500,
+    type: "expense",
+    categoryId: 2,
+    userId: 1,
+  },
+  {
+    id: 3,
+    date: "2025-05-03",
+    description: "Groceries",
+    amount: 200,
+    type: "expense",
+    categoryId: 3,
+    userId: 1,
+  },
+];
+
 const TransactionTable: React.FC = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, logout, validateToken } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,21 +100,13 @@ const TransactionTable: React.FC = () => {
     );
     if (!isAuthenticated) {
       console.log("User not authenticated");
-      setError("User not authenticated");
+      setError(t("errors.user_not_authenticated") || "User not authenticated");
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      console.log("Validating token...");
-      await validateToken();
-      const accessToken = localStorage.getItem("accessToken");
-      console.log("Access token:", accessToken ? "Present" : "Missing");
-      if (!accessToken) {
-        throw new Error("No access token found");
-      }
-
       const storedUserId = localStorage.getItem("userId");
       console.log("Stored userId:", storedUserId);
       if (!storedUserId) {
@@ -96,61 +116,46 @@ const TransactionTable: React.FC = () => {
       console.log("Parsed userId:", parsedUserId);
       setUserId(parsedUserId);
 
-      console.log("Fetching transactions...");
-      const data = await transactionService.getAllTransactions(
-        accessToken,
-        parsedUserId
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log("Fetching mocked transactions...");
+
+      // Filter transactions by userId to simulate server-side filtering
+      const validTransactions = mockTransactions.filter(
+        (transaction) =>
+          transaction.userId === parsedUserId &&
+          transaction.id != null &&
+          transaction.amount != null &&
+          transaction.date != null &&
+          transaction.type != null &&
+          transaction.categoryId != null
       );
-      console.log("Fetched transactions:", data);
 
-      // Transform API response
-      const validTransactions: FinancialTransaction[] = data
-        .map((transaction: any) => ({
-          id: transaction.Id,
-          userId: transaction.UserId,
-          categoryId: transaction.CategoryId,
-          date: new Date(transaction.Date).toISOString().split("T")[0],
-          description: transaction.Description || "",
-          amount: transaction.Amount ?? 0,
-          type: transaction.Type ?? "income",
-        }))
-        .filter(
-          (transaction: FinancialTransaction) =>
-            transaction.id != null &&
-            transaction.amount != null &&
-            transaction.date != null &&
-            transaction.type != null &&
-            transaction.categoryId != null &&
-            transaction.userId != null
-        );
-
-      if (validTransactions.length !== data.length) {
+      if (validTransactions.length !== mockTransactions.length) {
         toast.warn(
-          `Filtered out ${
-            data.length - validTransactions.length
-          } invalid transactions`
+          t("warnings.invalid_transactions_filtered", {
+            count: mockTransactions.length - validTransactions.length,
+          }) ||
+            `Filtered out ${
+              mockTransactions.length - validTransactions.length
+            } invalid transactions`
         );
       }
       setTransactions(validTransactions);
       setError(null);
     } catch (err) {
       console.error("Error in fetchTransactions:", err);
-      const error = err as Error | AxiosError;
-      if (
-        error.message === "No access token found" ||
-        error.message.includes("Invalid or expired token")
-      ) {
-        console.log("Logging out due to token issue");
-        logout();
-      } else if (
-        error instanceof AxiosError &&
-        error.response?.status === 401
-      ) {
-        console.log("Logging out due to 401 error");
+      const error = err as Error;
+      if (error.message === "No user ID found in localStorage") {
+        console.log("Logging out due to missing user ID");
         logout();
       }
-      setError(t("errors.fetch_transactions_failed"));
-      toast.error(t("errors.fetch_transactions_failed"));
+      setError(
+        t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
+      );
+      toast.error(
+        t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
+      );
     } finally {
       setLoading(false);
     }
@@ -190,213 +195,214 @@ const TransactionTable: React.FC = () => {
   ) => {
     try {
       const transactionItem = item as FinancialTransaction;
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("No access token found");
-      }
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       if (isEdit) {
-        const updatedTransaction = await transactionService.updateTransaction(
-          transactionItem.id,
-          {
-            date: transactionItem.date,
-            description: transactionItem.description,
-            amount: transactionItem.amount,
-            type: transactionItem.type,
-            categoryId: transactionItem.categoryId,
-          },
-          accessToken
-        );
+        const updatedTransaction = { ...transactionItem };
         setTransactions(
           transactions.map((t) =>
             t.id === transactionItem.id ? updatedTransaction : t
           )
         );
-        toast.success(t("success.transaction_updated"));
-      } else {
-        const newTransaction = await transactionService.createTransaction(
-          {
-            date: transactionItem.date,
-            description: transactionItem.description,
-            amount: transactionItem.amount,
-            type: transactionItem.type,
-            categoryId: transactionItem.categoryId,
-            userId: userId || 0, // Use stored userId
-          },
-          accessToken
+        toast.success(
+          t("success.transaction_updated") || "Transaction updated successfully"
         );
+      } else {
+        const newTransaction = {
+          ...transactionItem,
+          id: transactions.length
+            ? Math.max(...transactions.map((t) => t.id)) + 1
+            : 1,
+          userId: userId || 0,
+        };
         setTransactions([...transactions, newTransaction]);
-        toast.success(t("success.transaction_created"));
+        toast.success(
+          t("success.transaction_created") || "Transaction created successfully"
+        );
       }
       setError(null);
     } catch (err) {
       console.error("Error in handleSave:", err);
-      const error = err as Error | AxiosError;
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        console.log("Logging out due to 401 error");
-        logout();
-      }
-      setError(t("errors.save_transaction_failed"));
-      toast.error(t("errors.save_transaction_failed"));
+      setError(
+        t("errors.save_transaction_failed") || "Failed to save transaction"
+      );
+      toast.error(
+        t("errors.save_transaction_failed") || "Failed to save transaction"
+      );
     }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("No access token found");
-      }
-      await transactionService.deleteTransaction(id, accessToken);
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setTransactions(transactions.filter((t) => t.id !== id));
       setError(null);
-      toast.success(t("success.transaction_deleted"));
+      toast.success(
+        t("success.transaction_deleted") || "Transaction deleted successfully"
+      );
     } catch (err) {
       console.error("Error in handleDelete:", err);
-      const error = err as Error | AxiosError;
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        console.log("Logging out due to 401 error");
-        logout();
-      }
-      setError(t("errors.delete_transaction_failed"));
-      toast.error(t("errors.delete_transaction_failed"));
+      setError(
+        t("errors.delete_transaction_failed") || "Failed to delete transaction"
+      );
+      toast.error(
+        t("errors.delete_transaction_failed") || "Failed to delete transaction"
+      );
     }
   };
 
+  // Define months array to avoid reliance on t("charts.months") directly
+  const months = [
+    { value: "1", label: t("charts.months.jan") || "January" },
+    { value: "2", label: t("charts.months.feb") || "February" },
+    { value: "3", label: t("charts.months.mar") || "March" },
+    { value: "4", label: t("charts.months.apr") || "April" },
+    { value: "5", label: t("charts.months.may") || "May" },
+    { value: "6", label: t("charts.months.jun") || "June" },
+    { value: "7", label: t("charts.months.jul") || "July" },
+    { value: "8", label: t("charts.months.aug") || "August" },
+    { value: "9", label: t("charts.months.sep") || "September" },
+    { value: "10", label: t("charts.months.oct") || "October" },
+    { value: "11", label: t("charts.months.nov") || "November" },
+    { value: "12", label: t("charts.months.dec") || "December" },
+  ];
+
   if (loading) {
-    return <div className="text-white">{t("loading")}</div>;
+    return (
+      <div className="text-white text-center py-4">
+        {t("loading") || "Loading..."}
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return <div className="text-red-500 text-center py-4">{error}</div>;
   }
 
   return (
-    <Card className="bg-[rgb(19,21,54)] border-none">
-      <CardHeader>
+    <Card className="bg-[rgb(19,21,54)] border-none shadow-lg rounded-lg">
+      <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-2xl text-white">
-            {t("recent_transactions")}
+          <CardTitle className="text-2xl text-white font-semibold">
+            {t("recent_transactions") || "Recent Transactions"}
           </CardTitle>
-          {/* Uncomment and update TableDialog if needed */}
-          {/* <TableDialog
-            type="transaction"
-            onSave={handleSave}
-            initialData={{
-              id: 0,
-              date: "",
-              description: "",
-              amount: 0,
-              type: "income",
-              categoryId: 1,
-              userId: userId || 0,
-            }}
-          /> */}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-4">
-          <div>
-            <Label className="text-white">{t("charts.months")}</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <div className="flex flex-col">
+            <Label className="text-white mb-2">
+              {t("charts.months") || "Month"}
+            </Label>
             <select
               value={filters.month}
               onChange={(e) =>
                 setFilters({ ...filters, month: e.target.value })
               }
-              className="w-full bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded"
+              className="w-full bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
             >
-              <option value="">{t("all")}</option>
-              {Object.entries(t("charts.months", { returnObjects: true })).map(
-                ([key, value]) => (
-                  <option
-                    key={key}
-                    value={String(
-                      new Date(
-                        2025,
-                        Object.keys(
-                          t("charts.months", { returnObjects: true })
-                        ).indexOf(key) + 1,
-                        1
-                      ).getMonth() + 1
-                    )}
-                  >
-                    {value}
-                  </option>
-                )
-              )}
+              <option value="">{t("all") || "All"}</option>
+              {months.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
             </select>
           </div>
-          <div>
-            <Label className="text-white">{t("amount")} Mín.</Label>
+          <div className="flex flex-col">
+            <Label className="text-white mb-2">
+              {t("amount") + " Mín." || "Min. Amount"}
+            </Label>
             <Input
               type="number"
               value={filters.minAmount}
               onChange={(e) =>
                 setFilters({ ...filters, minAmount: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
+              placeholder="0"
             />
           </div>
-          <div>
-            <Label className="text-white">{t("amount")} Máx.</Label>
+          <div className="flex flex-col">
+            <Label className="text-white mb-2">
+              {t("amount") + " Máx." || "Max. Amount"}
+            </Label>
             <Input
               type="number"
               value={filters.maxAmount}
               onChange={(e) =>
                 setFilters({ ...filters, maxAmount: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
+              placeholder="0"
             />
           </div>
-          <div>
-            <Label className="text-white">{t("date")} Início</Label>
+          <div className="flex flex-col">
+            <Label className="text-white mb-2">
+              {t("date") + " Início" || "Start Date"}
+            </Label>
             <Input
               type="date"
               value={filters.startDate}
               onChange={(e) =>
                 setFilters({ ...filters, startDate: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
             />
           </div>
-          <div>
-            <Label className="text-white">{t("date")} Fim</Label>
+          <div className="flex flex-col">
+            <Label className="text-white mb-2">
+              {t("date") + " Fim" || "End Date"}
+            </Label>
             <Input
               type="date"
               value={filters.endDate}
               onChange={(e) =>
                 setFilters({ ...filters, endDate: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
             />
           </div>
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-[rgb(40,42,80)]">
-              <TableHead className="text-gray-400">{t("date")}</TableHead>
-              <TableHead className="text-gray-400">
-                {t("description")}
+            <TableRow className="border-b border-[rgb(40,42,80)] hover:bg-[rgb(30,32,70)]">
+              <TableHead className="text-gray-400 font-medium py-3">
+                {t("date") || "Date"}
               </TableHead>
-              <TableHead className="text-gray-400">{t("amount")}</TableHead>
-              <TableHead className="text-gray-400">{t("type")}</TableHead>
-              <TableHead className="text-gray-400"></TableHead>
+              <TableHead className="text-gray-400 font-medium py-3">
+                {t("description") || "Description"}
+              </TableHead>
+              <TableHead className="text-gray-400 font-medium py-3">
+                {t("amount") || "Amount"}
+              </TableHead>
+              <TableHead className="text-gray-400 font-medium py-3">
+                {t("type") || "Type"}
+              </TableHead>
+              <TableHead className="text-gray-400 font-medium py-3 w-24"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTransactions.map((transaction) => (
               <TableRow
                 key={transaction.id}
-                className="border-b border-[rgb(40,42,80)]"
+                className="border-b border-[rgb(40,42,80)] hover:bg-[rgb(30,32,70)]"
               >
-                <TableCell>{transaction.date || "N/A"}</TableCell>
-                <TableCell>{transaction.description || "N/A"}</TableCell>
+                <TableCell className="py-3">
+                  {transaction.date || "N/A"}
+                </TableCell>
+                <TableCell className="py-3">
+                  {transaction.description || "N/A"}
+                </TableCell>
                 <TableCell
-                  className={
+                  className={`py-3 ${
                     transaction.type === "income"
                       ? "text-green-400"
                       : "text-red-500"
-                  }
+                  }`}
                 >
                   {typeof transaction.amount === "number"
                     ? transaction.amount.toLocaleString("pt-BR", {
@@ -405,24 +411,19 @@ const TransactionTable: React.FC = () => {
                       })
                     : "N/A"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-3">
                   {t(
                     transaction.type === "income"
                       ? "last_incomes"
                       : "last_expenses"
-                  )}
+                  ) || (transaction.type === "income" ? "Income" : "Expense")}
                 </TableCell>
-                <TableCell className="flex gap-2">
-                  {/* Uncomment and update TableDialog if needed */}
-                  {/* <TableDialog
-                    type="transaction"
-                    onSave={handleSave}
-                    initialData={transaction}
-                  /> */}
+                <TableCell className="py-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(transaction.id)}
+                    className="hover:bg-red-900/20"
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

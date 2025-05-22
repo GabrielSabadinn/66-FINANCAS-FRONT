@@ -140,7 +140,7 @@ export default function Profile() {
                   className="bg-[rgb(30,32,70)] border-none text-white px-4 py-2"
                 />
               </div>
-              <div>
+              {/*            <div>
                 <Label htmlFor="bio" className="text-white">
                   {t("bio_label")}
                 </Label>
@@ -152,7 +152,7 @@ export default function Profile() {
                   className="bg-[rgb(30,32,70)] border-none text-white px-4 py-2"
                   rows={3}
                 />
-              </div>
+              </div> */}
             </div>
 
             {/* Nova Seção: Imagem do Dashboard */}
