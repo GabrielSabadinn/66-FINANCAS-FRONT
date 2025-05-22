@@ -15,140 +15,208 @@ interface Transaction {
 }
 
 export const transactionService = {
-  async getAllTransactions(): Promise<Transaction[]> {
-    const accessToken = localStorage.getItem("accessToken");
+  async getAllTransactions(
+    accessToken: string,
+    userId?: number
+  ): Promise<Transaction[]> {
     if (!accessToken) {
       throw new Error("No access token found");
     }
 
-    const response = await axios.get(
-      `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BASE}`,
-      {
+    try {
+      const url = userId
+        ? `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BASE}?userId=${userId}`
+        : `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BASE}`;
+      console.log("Calling transactions API:", url);
+      const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
-    );
+      });
+      console.log("Transactions API Response:", response.data);
 
-    return response.data.map((transaction: any) => ({
-      id: transaction.Id,
-      userId: transaction.UserId,
-      categoryId: transaction.CategoryId,
-      date: new Date(transaction.Date).toISOString().split("T")[0],
-      description: transaction.Description || "",
-      amount: transaction.Amount ?? 0,
-      type: transaction.Type ?? "income",
-    }));
+      return response.data.map((transaction: any) => ({
+        id: transaction.Id,
+        userId: transaction.UserId,
+        categoryId: transaction.CategoryId,
+        date: new Date(transaction.Date).toISOString().split("T")[0],
+        description: transaction.Description || "",
+        amount: transaction.Amount ?? 0,
+        type: transaction.Type ?? "income",
+      }));
+    } catch (error: any) {
+      console.error("Transactions API Error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw new Error(
+        error.response?.data.message || "Failed to fetch transactions"
+      );
+    }
   },
 
-  async getTransactionById(id: number): Promise<Transaction> {
-    const accessToken = localStorage.getItem("accessToken");
+  async getTransactionById(
+    id: number,
+    accessToken: string
+  ): Promise<Transaction> {
     if (!accessToken) {
       throw new Error("No access token found");
     }
 
-    const response = await axios.get(
-      `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BY_ID.replace(
+    try {
+      const url = `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BY_ID.replace(
         ":id",
         String(id)
-      )}`,
-      {
+      )}`;
+      console.log("Calling transaction by ID API:", url);
+      const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
-    );
+      });
+      console.log("Transaction by ID API Response:", response.data);
 
-    const transaction = response.data;
-    return {
-      id: transaction.Id,
-      userId: transaction.UserId,
-      categoryId: transaction.CategoryId,
-      date: new Date(transaction.Date).toISOString().split("T")[0],
-      description: transaction.Description || "",
-      amount: transaction.Amount ?? 0,
-      type: transaction.Type ?? "income",
-    };
+      const transaction = response.data;
+      return {
+        id: transaction.Id,
+        userId: transaction.UserId,
+        categoryId: transaction.CategoryId,
+        date: new Date(transaction.Date).toISOString().split("T")[0],
+        description: transaction.Description || "",
+        amount: transaction.Amount ?? 0,
+        type: transaction.Type ?? "income",
+      };
+    } catch (error: any) {
+      console.error("Transaction by ID API Error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw new Error(
+        error.response?.data.message || "Failed to fetch transaction"
+      );
+    }
   },
 
-  async createTransaction(data: Omit<Transaction, "id">): Promise<Transaction> {
-    const accessToken = localStorage.getItem("accessToken");
+  async createTransaction(
+    data: Omit<Transaction, "id">,
+    accessToken: string
+  ): Promise<Transaction> {
     if (!accessToken) {
       throw new Error("No access token found");
     }
 
-    const response = await axios.post(
-      `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BASE}`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    try {
+      console.log("Creating transaction with payload:", data);
+      const response = await axios.post(
+        `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BASE}`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      console.log("Created transaction:", response.data);
 
-    const transaction = response.data;
-    return {
-      id: transaction.Id,
-      userId: transaction.UserId,
-      categoryId: transaction.CategoryId,
-      date: new Date(transaction.Date).toISOString().split("T")[0],
-      description: transaction.Description || "",
-      amount: transaction.Amount ?? 0,
-      type: transaction.Type ?? "income",
-    };
+      const transaction = response.data;
+      return {
+        id: transaction.Id,
+        userId: transaction.UserId,
+        categoryId: transaction.CategoryId,
+        date: new Date(transaction.Date).toISOString().split("T")[0],
+        description: transaction.Description || "",
+        amount: transaction.Amount ?? 0,
+        type: transaction.Type ?? "income",
+      };
+    } catch (error: any) {
+      console.error("Create transaction error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw new Error(
+        error.response?.data.message || "Failed to create transaction"
+      );
+    }
   },
 
   async updateTransaction(
     id: number,
-    data: Partial<Transaction>
+    data: Partial<Transaction>,
+    accessToken: string
   ): Promise<Transaction> {
-    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found");
     }
 
-    const response = await axios.put(
-      `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BY_ID.replace(
-        ":id",
-        String(id)
-      )}`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    try {
+      console.log("Updating transaction with payload:", data);
+      const response = await axios.put(
+        `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BY_ID.replace(
+          ":id",
+          String(id)
+        )}`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      console.log("Updated transaction:", response.data);
 
-    const transaction = response.data;
-    return {
-      id: transaction.Id,
-      userId: transaction.UserId,
-      categoryId: transaction.CategoryId,
-      date: new Date(transaction.Date).toISOString().split("T")[0],
-      description: transaction.Description || "",
-      amount: transaction.Amount ?? 0,
-      type: transaction.Type ?? "income",
-    };
+      const transaction = response.data;
+      return {
+        id: transaction.Id,
+        userId: transaction.UserId,
+        categoryId: transaction.CategoryId,
+        date: new Date(transaction.Date).toISOString().split("T")[0],
+        description: transaction.Description || "",
+        amount: transaction.Amount ?? 0,
+        type: transaction.Type ?? "income",
+      };
+    } catch (error: any) {
+      console.error("Update transaction error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw new Error(
+        error.response?.data.message || "Failed to update transaction"
+      );
+    }
   },
 
-  async deleteTransaction(id: number): Promise<void> {
-    const accessToken = localStorage.getItem("accessToken");
+  async deleteTransaction(id: number, accessToken: string): Promise<void> {
     if (!accessToken) {
       throw new Error("No access token found");
     }
 
-    await axios.delete(
-      `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BY_ID.replace(
-        ":id",
-        String(id)
-      )}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    try {
+      console.log("Deleting transaction with id:", id);
+      await axios.delete(
+        `${API_BASE_URL}/${API_ROUTES.TRANSACTIONS.BY_ID.replace(
+          ":id",
+          String(id)
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      console.log("Transaction deleted successfully");
+    } catch (error: any) {
+      console.error("Delete transaction error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw new Error(
+        error.response?.data.message || "Failed to delete transaction"
+      );
+    }
   },
 };

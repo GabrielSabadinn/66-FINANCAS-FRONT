@@ -7,6 +7,7 @@ import {
 } from "react";
 import { authService } from "@/services/authService";
 import { jwtDecode } from "jwt-decode";
+
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -29,7 +30,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const login = async (email: string, password: string) => {
+    if (isAuthenticated) {
+      console.log("Already authenticated, skipping login");
+      return;
+    }
     try {
+      console.log("Initiating login for:", email);
       const { accessToken, refreshToken, user } = await authService.login({
         email,
         password,
@@ -46,14 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("userId", userId.toString());
       setIsAuthenticated(true);
-    } catch (error) {
+      console.log("Login successful, userId:", userId);
+    } catch (error: any) {
       console.error("Login error:", error);
-      throw error;
+      throw new Error(error.message || "Login failed");
     }
   };
 
   const logout = () => {
-    console.log("Executando logout");
+    console.log("Executing logout");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
@@ -62,23 +69,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const validateToken = async (): Promise<boolean> => {
     try {
+      console.log("Validating token...");
       await authService.validateToken();
-      // Ensure userId is in localStorage after validation
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken && !localStorage.getItem("userId")) {
         const decoded: JwtPayload = jwtDecode(accessToken);
         localStorage.setItem("userId", decoded.userId.toString());
+        console.log("Restored userId:", decoded.userId);
       }
       setIsAuthenticated(true);
+      console.log("Token validation successful");
       return true;
     } catch (error) {
+      console.error("Token validation failed:", error);
       logout();
       return false;
     }
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken && !isAuthenticated) {
+      console.log("Found accessToken, validating...");
       validateToken();
     }
   }, []);

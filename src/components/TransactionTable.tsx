@@ -46,10 +46,11 @@ interface FixedCost {
 
 const TransactionTable: React.FC = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, validateToken } = useAuth();
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const [filters, setFilters] = useState({
     month: "",
     minAmount: "",
@@ -65,9 +66,41 @@ const TransactionTable: React.FC = () => {
   }, [isAuthenticated]);
 
   const fetchTransactions = async () => {
+    console.log(
+      "Starting fetchTransactions, isAuthenticated:",
+      isAuthenticated
+    );
+    if (!isAuthenticated) {
+      console.log("User not authenticated");
+      setError("User not authenticated");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await transactionService.getAllTransactions();
+      console.log("Validating token...");
+      await validateToken();
+      const accessToken = localStorage.getItem("accessToken");
+      console.log("Access token:", accessToken ? "Present" : "Missing");
+      if (!accessToken) {
+        throw new Error("No access token found");
+      }
+
+      const storedUserId = localStorage.getItem("userId");
+      console.log("Stored userId:", storedUserId);
+      if (!storedUserId) {
+        throw new Error("No user ID found in localStorage");
+      }
+      const parsedUserId = parseInt(storedUserId, 10);
+      console.log("Parsed userId:", parsedUserId);
+      setUserId(parsedUserId);
+
+      console.log("Fetching transactions...");
+      const data = await transactionService.getAllTransactions(
+        accessToken,
+        parsedUserId
+      );
       console.log("Fetched transactions:", data);
 
       // Transform API response
@@ -79,7 +112,7 @@ const TransactionTable: React.FC = () => {
           date: new Date(transaction.Date).toISOString().split("T")[0],
           description: transaction.Description || "",
           amount: transaction.Amount ?? 0,
-          type: transaction.Type ?? "income", // Fallback if backend doesn't provide Type
+          type: transaction.Type ?? "income",
         }))
         .filter(
           (transaction: FinancialTransaction) =>
@@ -101,13 +134,19 @@ const TransactionTable: React.FC = () => {
       setTransactions(validTransactions);
       setError(null);
     } catch (err) {
+      console.error("Error in fetchTransactions:", err);
       const error = err as Error | AxiosError;
-      if (error.message === "No access token found") {
+      if (
+        error.message === "No access token found" ||
+        error.message.includes("Invalid or expired token")
+      ) {
+        console.log("Logging out due to token issue");
         logout();
       } else if (
         error instanceof AxiosError &&
         error.response?.status === 401
       ) {
+        console.log("Logging out due to 401 error");
         logout();
       }
       setError(t("errors.fetch_transactions_failed"));
@@ -151,6 +190,11 @@ const TransactionTable: React.FC = () => {
   ) => {
     try {
       const transactionItem = item as FinancialTransaction;
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("No access token found");
+      }
+
       if (isEdit) {
         const updatedTransaction = await transactionService.updateTransaction(
           transactionItem.id,
@@ -160,7 +204,8 @@ const TransactionTable: React.FC = () => {
             amount: transactionItem.amount,
             type: transactionItem.type,
             categoryId: transactionItem.categoryId,
-          }
+          },
+          accessToken
         );
         setTransactions(
           transactions.map((t) =>
@@ -169,21 +214,26 @@ const TransactionTable: React.FC = () => {
         );
         toast.success(t("success.transaction_updated"));
       } else {
-        const newTransaction = await transactionService.createTransaction({
-          date: transactionItem.date,
-          description: transactionItem.description,
-          amount: transactionItem.amount,
-          type: transactionItem.type,
-          categoryId: transactionItem.categoryId,
-          userId: transactionItem.userId,
-        });
+        const newTransaction = await transactionService.createTransaction(
+          {
+            date: transactionItem.date,
+            description: transactionItem.description,
+            amount: transactionItem.amount,
+            type: transactionItem.type,
+            categoryId: transactionItem.categoryId,
+            userId: userId || 0, // Use stored userId
+          },
+          accessToken
+        );
         setTransactions([...transactions, newTransaction]);
         toast.success(t("success.transaction_created"));
       }
       setError(null);
     } catch (err) {
+      console.error("Error in handleSave:", err);
       const error = err as Error | AxiosError;
       if (error instanceof AxiosError && error.response?.status === 401) {
+        console.log("Logging out due to 401 error");
         logout();
       }
       setError(t("errors.save_transaction_failed"));
@@ -193,13 +243,19 @@ const TransactionTable: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await transactionService.deleteTransaction(id);
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("No access token found");
+      }
+      await transactionService.deleteTransaction(id, accessToken);
       setTransactions(transactions.filter((t) => t.id !== id));
       setError(null);
       toast.success(t("success.transaction_deleted"));
     } catch (err) {
+      console.error("Error in handleDelete:", err);
       const error = err as Error | AxiosError;
       if (error instanceof AxiosError && error.response?.status === 401) {
+        console.log("Logging out due to 401 error");
         logout();
       }
       setError(t("errors.delete_transaction_failed"));
@@ -222,7 +278,8 @@ const TransactionTable: React.FC = () => {
           <CardTitle className="text-2xl text-white">
             {t("recent_transactions")}
           </CardTitle>
-          {/*       <TableDialog
+          {/* Uncomment and update TableDialog if needed */}
+          {/* <TableDialog
             type="transaction"
             onSave={handleSave}
             initialData={{
@@ -231,8 +288,8 @@ const TransactionTable: React.FC = () => {
               description: "",
               amount: 0,
               type: "income",
-              categoryId: 1, // Default category ID, adjust as needed
-              userId: 0, // Will be set by the backend
+              categoryId: 1,
+              userId: userId || 0,
             }}
           /> */}
         </div>
@@ -356,7 +413,8 @@ const TransactionTable: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell className="flex gap-2">
-                  {/*        <TableDialog
+                  {/* Uncomment and update TableDialog if needed */}
+                  {/* <TableDialog
                     type="transaction"
                     onSave={handleSave}
                     initialData={transaction}

@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/hooks/useSignIn.ts
+import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { authService } from "@/services/authService";
@@ -8,22 +9,6 @@ import axios from "axios";
 interface FormData {
   email: string;
   password: string;
-}
-
-interface AuthResponse {
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    pwd: string;
-    salt: string;
-    pathImageBanner: string | null;
-    pathImageIcon: string | null;
-    createdAt: string;
-    updatedAt: string;
-  };
-  accessToken: string;
-  refreshToken: string;
 }
 
 interface ValidationError {
@@ -45,6 +30,7 @@ export const useSignIn = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
   const validateForm = () => {
@@ -57,28 +43,33 @@ export const useSignIn = () => {
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading) {
+      console.log("Login already in progress, skipping");
+      return;
+    }
+
     setError(null);
     setSuccess(null);
 
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
+      console.log("Validation error:", validationError);
       return;
     }
 
     setLoading(true);
 
     try {
-      const response: AuthResponse = await authService.login({
-        email: formData.email,
-        password: formData.password,
-      });
-      login(response.accessToken, response.refreshToken);
+      console.log("Submitting login:", { email: formData.email });
+      await login(formData.email, formData.password);
       setSuccess(t("success.login_successful"));
-      navigate("/dashboard");
+      console.log("Login successful, navigating to /dashboard");
+      navigate("/dashboard", { replace: true }); // Use replace to avoid history stack issues
     } catch (err) {
+      console.error("Login error in useSignIn:", err);
       if (axios.isAxiosError(err) && err.response?.status === 400) {
         const errors = err.response.data.errors as ValidationError[];
         if (errors && errors.length > 0) {
@@ -91,11 +82,11 @@ export const useSignIn = () => {
               setError(t("errors.password_required"));
               break;
             default:
-              setError(t("errors.login_failed"));
+              setError(errorMsg || t("errors.login_failed"));
               break;
           }
         } else {
-          setError(t("errors.login_failed"));
+          setError(err.response.data.message || t("errors.login_failed"));
         }
       } else {
         setError(t("errors.unexpected_error"));

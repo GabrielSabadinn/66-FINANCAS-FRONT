@@ -17,6 +17,12 @@ export default function SignIn() {
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submitted:", { email: formData.email });
+    handleSubmit(e);
+  };
+
   return (
     <div
       className="relative flex h-screen text-white bg-black overflow-hidden"
@@ -40,7 +46,7 @@ export default function SignIn() {
               <p className="text-green-500 text-sm mb-4">{success}</p>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="space-y-6">
               {/* Email */}
               <div>
                 <Label
@@ -61,6 +67,7 @@ export default function SignIn() {
                     onChange={handleInputChange}
                     placeholder={t("email_placeholder")}
                     className="bg-[rgb(19,21,54)] border-none rounded-[20px] text-white text-sm h-[46px] w-full max-w-[346px] max-md:max-w-[346px] max-md:w-full focus:border-none focus:ring-0 px-4"
+                    disabled={loading}
                   />
                 </GradientBorder>
               </div>
@@ -86,6 +93,7 @@ export default function SignIn() {
                       onChange={handleInputChange}
                       placeholder={t("password_placeholder")}
                       className="bg-[rgb(19,21,54)] border-none rounded-[20px] text-white text-sm h-[46px] w-full max-w-[346px] max-md:max-w-[346px] max-md:w-full focus:border-none focus:ring-0 px-4 pr-8"
+                      disabled={loading}
                     />
                     <Button
                       type="button"
@@ -93,6 +101,7 @@ export default function SignIn() {
                       size="icon"
                       className="absolute right-6 top-1/2 -translate-y-1/2 text-white h-[10px] w-[10px] rounded-[20px]"
                       onClick={handleTogglePassword}
+                      disabled={loading}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </Button>
