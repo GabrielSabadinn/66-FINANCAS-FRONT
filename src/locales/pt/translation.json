@@ -107,5 +107,9 @@
     "description": "Tem certeza de que deseja sair? Isso encerrará sua sessão atual.",
     "cancel": "Cancelar",
     "confirm": "Sair"
+  },
+  "user": {
+    "entries": "Entradas",
+    "expenses": "Despesas"
   }
 }

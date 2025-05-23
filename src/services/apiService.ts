@@ -1,7 +1,54 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
-import { authService } from "@/services/authService";
+import axios from "axios";
+import { authService } from "./authService";
 
 const API_BASE_URL = "http://localhost:3000/api";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+let accessToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  accessToken = token;
+  if (token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common["Authorization"];
+  }
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) {
+          throw new Error("No refresh token available");
+        }
+        const { accessToken: newAccessToken } = await authService.refreshToken(
+          refreshToken
+        );
+        setAuthToken(newAccessToken);
+        localStorage.setItem("accessToken", newAccessToken);
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        localStorage.clear();
+        window.location.href = "/auth/signin";
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+interface BalanceResponse {
+  balance: number;
+}
 
 interface FinancialTransaction {
   Id: number;
@@ -14,108 +61,36 @@ interface FinancialTransaction {
   Created_At?: string;
 }
 
-interface BalanceResponse {
-  userId: number;
-  totalCredits: number;
-  totalDebits: number;
-  balance: number;
-}
-
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-export const setAuthToken = (token: string | null) => {
-  if (token) {
-    apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  } else {
-    delete apiClient.defaults.headers.common["Authorization"];
-  }
-};
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config;
-    if (
-      error.response?.status === 401 &&
-      originalRequest &&
-      !originalRequest.headers["X-Retry"]
-    ) {
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
-        }
-        const { accessToken } = await authService.refreshToken(refreshToken);
-        localStorage.setItem("accessToken", accessToken);
-        setAuthToken(accessToken);
-        originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
-        originalRequest.headers["X-Retry"] = "true";
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        console.error("Token refresh failed:", refreshError);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userName");
-        window.location.href = "/auth/signin";
-        return Promise.reject(refreshError);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
 export const fetchBalance = async (
   userId: number
 ): Promise<BalanceResponse> => {
-  try {
-    const response = await apiClient.get("/bank-statements/balance", {
-      params: { userId },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch balance:", error);
-    throw new Error("Failed to fetch balance");
-  }
+  const response = await api.get(`/bank-statements/balance?userId=${userId}`);
+  return response.data;
 };
 
 export const fetchTransactions = async (
   userId: number
 ): Promise<FinancialTransaction[]> => {
-  try {
-    const response = await apiClient.get("/bank-statements", {
-      params: { userId },
-    });
-    console.log("Fetched transactions:", response.data); // Debug log
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch transactions:", error);
-    throw new Error("Failed to fetch transactions");
-  }
+  const response = await api.get(`/bank-statements?userId=${userId}`);
+  return response.data;
 };
 
 export const createTransaction = async (
   transaction: Omit<FinancialTransaction, "Id" | "Created_At">
 ): Promise<FinancialTransaction> => {
-  try {
-    const response = await apiClient.post("/bank-statements", transaction);
-    return response.data;
-  } catch (error) {
-    console.error("Failed to create transaction:", error);
-    throw new Error("Failed to create transaction");
-  }
+  const payload = {
+    userId: transaction.UserId,
+    entryType: transaction.EntryType,
+    entryId: transaction.EntryId,
+    value: transaction.Value,
+    description: transaction.Description,
+    date: transaction.Date,
+  };
+  console.log("API createTransaction payload:", payload);
+  const response = await api.post("/bank-statements", payload);
+  return response.data;
 };
 
 export const deleteTransaction = async (id: number): Promise<void> => {
-  try {
-    await apiClient.delete(`/bank-statements/${id}`);
-  } catch (error) {
-    console.error("Failed to delete transaction:", error);
-    throw new Error("Failed to delete transaction");
-  }
+  await api.delete(`/bank-statements/${id}`);
 };

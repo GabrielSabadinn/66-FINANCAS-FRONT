@@ -7,10 +7,6 @@ import { FinancialFreedomCard } from "../components/FinancialFreedomCard";
 import { ChartCard } from "../components/ChartCard";
 import TransactionTable from "@/components/TransactionTable";
 import { Wallet, Globe, FileText, ShoppingCart } from "lucide-react";
-import {
-  getBarChartDataDashboard,
-  getLineChartDataDashboard,
-} from "@/variables/charts";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
 import {
@@ -30,11 +26,19 @@ interface FinancialTransaction {
   Created_At?: string;
 }
 
+interface LineChartData {
+  name: string;
+  [key: string]: string | number;
+}
+
+interface BarChartData {
+  name: string;
+  [key: string]: string | number;
+}
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const { isAuthenticated, userId, logout } = useAuth();
-  const barData = getBarChartDataDashboard();
-  const lineData = getLineChartDataDashboard();
 
   const [todayMoney, setTodayMoney] = useState(0);
   const [futureMoney, setFutureMoney] = useState(200000);
@@ -53,14 +57,10 @@ export default function Dashboard() {
       if (!userId) {
         throw new Error("No user ID found");
       }
-
-      // Fetch balance
       const balanceData = await fetchBalance(userId);
       setTodayMoney(balanceData.balance);
-
-      // Fetch transactions
       const validTransactions = await fetchTransactions(userId);
-      console.log("Fetched transactions in Dashboard:", validTransactions); // Debug log
+      console.log("Fetched transactions in Dashboard:", validTransactions);
       setTransactions(validTransactions);
     } catch (err) {
       console.error("Failed to fetch data:", err);
@@ -72,44 +72,53 @@ export default function Dashboard() {
 
   const handleAdd = async (
     title: string,
-    data: { description: string; amount: number; type?: "income" | "expense" }
+    data: {
+      description: string;
+      amount: number | string;
+      type?: "income" | "expense";
+    }
   ) => {
     if (!isAuthenticated || !userId) {
       logout();
       return;
     }
-
     try {
       const entryIdMap: { [key: string]: number } = {
-        [t("today_money")]: 1, // Transactions
-        [t("future_money")]: 4, // Payments
-        [t("investments_money")]: 2, // Investments
-        [t("fixed_costs")]: 3, // Fixed costs
+        [t("today_money")]: 1,
+        [t("future_money")]: 4,
+        [t("investments_money")]: 2,
+        [t("fixed_costs")]: 3,
       };
-
+      const entryId = entryIdMap[title];
+      if (!entryId) {
+        throw new Error(`Invalid title: ${title}`);
+      }
+      const amount =
+        typeof data.amount === "string" ? parseFloat(data.amount) : data.amount;
+      if (isNaN(amount)) {
+        throw new Error("Invalid amount");
+      }
       const newTransaction: Omit<FinancialTransaction, "Id" | "Created_At"> = {
-        UserId: userId,
+        UserId: parseInt(userId.toString()), // Ensure integer
         EntryType: data.type === "income" ? "C" : "D",
-        EntryId: entryIdMap[title] || 1,
-        Value: data.amount,
+        EntryId: parseInt(entryId.toString()), // Ensure integer
+        Value: parseFloat(amount.toFixed(2)), // Ensure decimal
         Description: data.description,
-        Date: new Date().toISOString(),
+        Date: new Date().toISOString().split(".")[0] + "Z", // Standard ISO format
       };
-
+      console.log("Sending transaction payload:", newTransaction);
       const createdTransaction = await createTransaction(newTransaction);
       setTransactions([...transactions, createdTransaction]);
-
-      // Update state based on title
       if (title === t("today_money")) {
         setTodayMoney((prev) =>
-          data.type === "income" ? prev + data.amount : prev - data.amount
+          data.type === "income" ? prev + amount : prev - amount
         );
       } else if (title === t("future_money")) {
-        setFutureMoney((prev) => prev + data.amount);
+        setFutureMoney((prev) => prev + amount);
       } else if (title === t("investments_money")) {
-        setInvestmentsMoney((prev) => prev + data.amount);
+        setInvestmentsMoney((prev) => prev + amount);
       } else if (title === t("fixed_costs")) {
-        setFixedCosts((prev) => prev + data.amount);
+        setFixedCosts((prev) => prev + amount);
       }
       toast.success(
         t("success.transaction_created") || "Transaction created successfully"
@@ -121,6 +130,108 @@ export default function Dashboard() {
       );
     }
   };
+
+  const getLineChartData = (): LineChartData[] => {
+    const months = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
+    const data: LineChartData[] = months.map((month) => ({
+      name: t(`charts.months.${month}`),
+      [t("user.entries")]: 0,
+      [t("user.expenses")]: 0,
+    }));
+
+    transactions.forEach((tx) => {
+      const date = new Date(tx.Date);
+      if (date.getFullYear() === 2025) {
+        const monthIndex = date.getMonth();
+        const key =
+          tx.EntryType === "C" ? t("user.entries") : t("user.expenses");
+        data[monthIndex][key] = (data[monthIndex][key] as number) + tx.Value;
+      }
+    });
+
+    return data;
+  };
+
+  const getBarChartData = (): BarChartData[] => {
+    const months = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
+    const data: BarChartData[] = months.map((month) => ({
+      name: t(`charts.months.${month}`),
+      [t("charts.sales")]: 0,
+    }));
+
+    transactions.forEach((tx) => {
+      if (tx.EntryType === "D") {
+        const date = new Date(tx.Date);
+        if (date.getFullYear() === 2025) {
+          const monthIndex = date.getMonth();
+          data[monthIndex][t("charts.sales")] =
+            (data[monthIndex][t("charts.sales")] as number) + tx.Value;
+        }
+      }
+    });
+
+    return data;
+  };
+
+  const getLineChartPercentage = () => {
+    const totalExpenses2025 = transactions
+      .filter(
+        (tx) => tx.EntryType === "D" && new Date(tx.Date).getFullYear() === 2025
+      )
+      .reduce((sum, tx) => sum + tx.Value, 0);
+    const totalExpenses2024 = totalExpenses2025 * 0.95;
+    const percentage =
+      ((totalExpenses2025 - totalExpenses2024) / totalExpenses2024) * 100;
+    return percentage;
+  };
+
+  const getBarChartPercentage = () => {
+    const mayExpenses = transactions
+      .filter(
+        (tx) => tx.EntryType === "D" && new Date(tx.Date).getMonth() === 4
+      )
+      .reduce((sum, tx) => sum + tx.Value, 0);
+    const aprilExpenses = transactions
+      .filter(
+        (tx) => tx.EntryType === "D" && new Date(tx.Date).getMonth() === 3
+      )
+      .reduce((sum, tx) => sum + tx.Value, 0);
+    const percentage = aprilExpenses
+      ? ((mayExpenses - aprilExpenses) / aprilExpenses) * 100
+      : 23;
+    return percentage;
+  };
+
+  const lineData = getLineChartData();
+  const barData = getBarChartData();
+  const linePercentage = getLineChartPercentage();
+  const barPercentage = getBarChartPercentage();
 
   return (
     <div
@@ -181,7 +292,14 @@ export default function Dashboard() {
           title={t("data_by_month")}
           subtitle={
             <>
-              <span className="text-green-500 font-bold">+5% {t("more")}</span>{" "}
+              <span
+                className={`font-bold ${
+                  linePercentage >= 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {linePercentage >= 0 ? "+" : ""}
+                {linePercentage.toFixed(1)}% {t("more")}
+              </span>{" "}
               {t("in")} 2025
             </>
           }
@@ -193,8 +311,15 @@ export default function Dashboard() {
           title={t("today_money")}
           subtitle={
             <>
-              <span className="text-green-400 font-bold">+23%</span> {t("more")}{" "}
-              {t("in")} {t("charts.months.apr")}
+              <span
+                className={`font-bold ${
+                  barPercentage >= 0 ? "text-green-400" : "text-red-500"
+                }`}
+              >
+                {barPercentage >= 0 ? "+" : ""}
+                {barPercentage.toFixed(1)}%
+              </span>{" "}
+              {t("more")} {t("in")} {t("charts.months.may")}
             </>
           }
           data={barData}
