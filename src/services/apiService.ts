@@ -1,18 +1,17 @@
-// src/services/apiService.ts
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { authService } from "@/services/authService";
 
 const API_BASE_URL = "http://localhost:3000/api";
 
 interface FinancialTransaction {
-  id: number;
-  userId: number;
-  entryType: "C" | "D";
-  entryId: number;
-  value: number;
-  description: string;
-  date: string;
-  created_at?: string;
+  Id: number;
+  UserId: number;
+  EntryType: "C" | "D";
+  EntryId: number;
+  Value: number;
+  Description: string;
+  Date: string;
+  Created_At?: string;
 }
 
 interface BalanceResponse {
@@ -62,7 +61,8 @@ apiClient.interceptors.response.use(
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userId");
-        window.location.href = "/login";
+        localStorage.removeItem("userName");
+        window.location.href = "/auth/signin";
         return Promise.reject(refreshError);
       }
     }
@@ -79,6 +79,7 @@ export const fetchBalance = async (
     });
     return response.data;
   } catch (error) {
+    console.error("Failed to fetch balance:", error);
     throw new Error("Failed to fetch balance");
   }
 };
@@ -90,19 +91,22 @@ export const fetchTransactions = async (
     const response = await apiClient.get("/bank-statements", {
       params: { userId },
     });
+    console.log("Fetched transactions:", response.data); // Debug log
     return response.data;
   } catch (error) {
+    console.error("Failed to fetch transactions:", error);
     throw new Error("Failed to fetch transactions");
   }
 };
 
 export const createTransaction = async (
-  transaction: Omit<FinancialTransaction, "id" | "created_at">
+  transaction: Omit<FinancialTransaction, "Id" | "Created_At">
 ): Promise<FinancialTransaction> => {
   try {
     const response = await apiClient.post("/bank-statements", transaction);
     return response.data;
   } catch (error) {
+    console.error("Failed to create transaction:", error);
     throw new Error("Failed to create transaction");
   }
 };
@@ -111,6 +115,7 @@ export const deleteTransaction = async (id: number): Promise<void> => {
   try {
     await apiClient.delete(`/bank-statements/${id}`);
   } catch (error) {
+    console.error("Failed to delete transaction:", error);
     throw new Error("Failed to delete transaction");
   }
 };

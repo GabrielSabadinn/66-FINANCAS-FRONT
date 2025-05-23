@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -17,7 +16,7 @@ interface AuthContextType {
   logout: () => void;
 }
 
-interface JwtPayload {
+export interface JwtPayload {
   userId: number;
   email: string;
   iat: number;
@@ -56,12 +55,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("userId", decodedUserId.toString());
+      localStorage.setItem("userName", user.name || "Nome do cliente");
       setIsAuthenticated(true);
       setUserId(decodedUserId);
       setAuthToken(accessToken);
-      console.log("Login successful, userId:", decodedUserId);
+      console.log(
+        "Login successful, userId:",
+        decodedUserId,
+        "name:",
+        user.name
+      );
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Login error:", error.message);
       throw new Error(error.message || "Login failed");
     }
   };
@@ -71,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
+    localStorage.removeItem("userName");
     setIsAuthenticated(false);
     setUserId(null);
     setAuthToken(null);

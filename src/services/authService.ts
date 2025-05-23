@@ -1,4 +1,3 @@
-// src/services/authService.ts
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:3000/api";
@@ -26,6 +25,12 @@ interface RegisterPayload {
 interface LoginPayload {
   email: string;
   password: string;
+}
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
 }
 
 export const authService = {
@@ -61,15 +66,23 @@ export const authService = {
     }
   },
 
-  getUserById: async (userId: number, accessToken: string): Promise<any> => {
+  getUserById: async (userId: number, accessToken: string): Promise<User> => {
     try {
       const response = await axios.get(`${API_BASE_URL}/users/${userId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      return response.data;
-    } catch (error) {
+      const user = response.data;
+      if (!user.name) {
+        console.warn(`No name found for user ${userId}`);
+      }
+      return user;
+    } catch (error: any) {
+      console.error(
+        "Failed to fetch user:",
+        error.response?.data || error.message
+      );
       throw new Error("Failed to fetch user");
     }
   },

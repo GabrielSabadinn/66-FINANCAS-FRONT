@@ -4,14 +4,10 @@ import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { authService } from "@/services/authService";
 import { jwtDecode } from "jwt-decode";
+import { JwtPayload } from "@/context/AuthContext";
 
 interface WelcomeCardProps {
   t: (key: string) => string;
-}
-
-interface TokenPayload {
-  userId: number;
-  email: string;
 }
 
 export const WelcomeCard: React.FC<WelcomeCardProps> = ({ t }) => {
@@ -20,36 +16,53 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ t }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Define a imagem aleatória
+    // Set random image
     const timestamp = Date.now();
     setRandomImage(`https://picsum.photos/600/400?random=${timestamp}`);
 
-    // Busca o nome do usuário
+    // Fetch user name
     const fetchUserName = async () => {
       const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) {
-        console.log("Nenhum accessToken encontrado no localStorage");
+        console.log("No accessToken found in localStorage");
         setUserName("Nome do cliente");
         setLoading(false);
         return;
       }
 
       try {
-        // Valida o token antes de usar
-        await authService.validateToken();
-        console.log("Token validado com sucesso");
-
-        // Decodifica o token para obter o userId
-        const decoded: TokenPayload = jwtDecode(accessToken);
-        console.log("Token decodificado:", decoded);
+        // Validate token client-side
+        const decoded: JwtPayload = jwtDecode(accessToken);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (decoded.exp < currentTime) {
+          console.log("Token expired");
+          setUserName("Nome do cliente");
+          setLoading(false);
+          return;
+        }
+        console.log("Token decoded:", decoded);
         const userId = decoded.userId;
 
-        // Busca o usuário com authService
+        // Try to get name from localStorage first
+        const storedName = localStorage.getItem("userName");
+        if (storedName) {
+          console.log("Using stored user name:", storedName);
+          setUserName(storedName);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback to API call
         const user = await authService.getUserById(userId, accessToken);
-        console.log("Usuário retornado:", user);
-        setUserName(user.Name); // Usa Name (maiúsculo)
-      } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
+        console.log("User fetched from API:", user);
+        const name = user.name || "Nome do cliente";
+        if (!user.name) {
+          console.warn("No name returned from API, using fallback");
+        }
+        setUserName(name);
+        localStorage.setItem("userName", name);
+      } catch (error: any) {
+        console.error("Error fetching user name:", error.message);
         setUserName("Nome do cliente");
       } finally {
         setLoading(false);

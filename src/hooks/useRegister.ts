@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { authService } from "@/services/authService";
+import { setAuthToken } from "@/services/apiService";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { JwtPayload } from "@/context/AuthContext";
 
 interface FormData {
   name: string;
@@ -49,13 +52,19 @@ export const useRegister = () => {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      return t("errors.name_required");
+      return t("errors.name_required") || "Name is required";
     }
-    if (!formData.email.trim()) {
-      return t("errors.valid_email_required");
+    if (
+      !formData.email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
+      return t("errors.valid_email_required") || "Valid email is required";
     }
-    if (!formData.password.trim()) {
-      return t("errors.password_required");
+    if (formData.password.length < 8) {
+      return (
+        t("errors.password_min_length") ||
+        "Password must be at least 8 characters"
+      );
     }
     return null;
   };
@@ -79,29 +88,50 @@ export const useRegister = () => {
         email: formData.email,
         password: formData.password,
       });
-      setSuccess(t("success.registration_successful"));
-      navigate("/auth/signin");
+
+      const { accessToken, refreshToken, user } = response;
+      const decoded: JwtPayload = jwtDecode(accessToken);
+      const userId = decoded.userId;
+
+      if (!userId) {
+        throw new Error("User ID not found in token");
+      }
+
+      // Store tokens and user data in localStorage
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("userId", userId.toString());
+      localStorage.setItem("userName", user.name || formData.name);
+
+      // Set auth token for API requests
+      setAuthToken(accessToken);
+
+      setSuccess(
+        t("success.registration_successful") || "Registration successful"
+      );
+      navigate("/dashboard");
     } catch (err) {
-      console.log("Erro no registro:", err); // Depuração
+      console.error("Registration error:", err);
       if (axios.isAxiosError(err) && err.response?.status === 400) {
         const errors = err.response.data.errors as ValidationError[];
-        console.log("Erros da API:", errors); // Depuração
         if (errors && errors.length > 0) {
           const errorMsg = errors[0].msg;
-          // Mapeia mensagens da API para traduções
           const errorTranslationMap: { [key: string]: string } = {
             "Name is required": "errors.name_required",
             "Valid email is required": "errors.valid_email_required",
             "Password must be at least 8 characters":
               "errors.password_min_length",
+            "Email already exists": "errors.email_already_exists",
           };
           const translationKey = errorTranslationMap[errorMsg];
-          setError(translationKey ? t(translationKey) : errorMsg); // Usa tradução ou msg bruta
+          setError(translationKey ? t(translationKey) : errorMsg);
         } else {
-          setError(t("errors.registration_failed"));
+          setError(t("errors.registration_failed") || "Registration failed");
         }
       } else {
-        setError(t("errors.unexpected_error"));
+        setError(
+          t("errors.unexpected_error") || "An unexpected error occurred"
+        );
       }
     } finally {
       setLoading(false);

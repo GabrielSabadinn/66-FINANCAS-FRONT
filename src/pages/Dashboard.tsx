@@ -1,4 +1,3 @@
-// src/pages/Dashboard.tsx
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { MiniStatisticsCard } from "../components/MiniStatisticsCard";
@@ -21,14 +20,14 @@ import {
 } from "@/services/apiService";
 
 interface FinancialTransaction {
-  id: number;
-  userId: number;
-  entryType: "C" | "D";
-  entryId: number;
-  value: number;
-  description: string;
-  date: string;
-  created_at?: string;
+  Id: number;
+  UserId: number;
+  EntryType: "C" | "D";
+  EntryId: number;
+  Value: number;
+  Description: string;
+  Date: string;
+  Created_At?: string;
 }
 
 export default function Dashboard() {
@@ -61,10 +60,13 @@ export default function Dashboard() {
 
       // Fetch transactions
       const validTransactions = await fetchTransactions(userId);
+      console.log("Fetched transactions in Dashboard:", validTransactions); // Debug log
       setTransactions(validTransactions);
     } catch (err) {
       console.error("Failed to fetch data:", err);
-      toast.error(t("errors.fetch_transactions_failed"));
+      toast.error(
+        t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
+      );
     }
   };
 
@@ -85,13 +87,13 @@ export default function Dashboard() {
         [t("fixed_costs")]: 3, // Fixed costs
       };
 
-      const newTransaction: Omit<FinancialTransaction, "id" | "created_at"> = {
-        userId,
-        entryType: data.type === "income" ? "C" : "D",
-        entryId: entryIdMap[title] || 1,
-        value: data.amount,
-        description: data.description,
-        date: new Date().toISOString(),
+      const newTransaction: Omit<FinancialTransaction, "Id" | "Created_At"> = {
+        UserId: userId,
+        EntryType: data.type === "income" ? "C" : "D",
+        EntryId: entryIdMap[title] || 1,
+        Value: data.amount,
+        Description: data.description,
+        Date: new Date().toISOString(),
       };
 
       const createdTransaction = await createTransaction(newTransaction);
@@ -109,10 +111,14 @@ export default function Dashboard() {
       } else if (title === t("fixed_costs")) {
         setFixedCosts((prev) => prev + data.amount);
       }
-      toast.success(t("success.transaction_created"));
+      toast.success(
+        t("success.transaction_created") || "Transaction created successfully"
+      );
     } catch (err) {
       console.error("Failed to add transaction:", err);
-      toast.error(t("errors.save_transaction_failed"));
+      toast.error(
+        t("errors.save_transaction_failed") || "Failed to save transaction"
+      );
     }
   };
 

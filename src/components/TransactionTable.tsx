@@ -1,4 +1,3 @@
-// src/components/TransactionTable.tsx
 import { useTranslation } from "react-i18next";
 import {
   Table,
@@ -14,18 +13,18 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
-
 import { useState, useEffect } from "react";
+import { deleteTransaction } from "@/services/apiService";
 
 interface FinancialTransaction {
-  id: number;
-  userId: number;
-  entryType: "C" | "D";
-  entryId: number;
-  value: number;
-  description: string;
-  date: string;
-  created_at?: string;
+  Id: number;
+  UserId: number;
+  EntryType: "C" | "D";
+  EntryId: number;
+  Value: number;
+  Description: string;
+  Date: string;
+  Created_At?: string;
 }
 
 interface TransactionTableProps {
@@ -39,7 +38,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const [filteredTransactions, setFilteredTransactions] =
     useState<FinancialTransaction[]>(transactions);
   const [filters, setFilters] = useState({
-    month: "",
     minAmount: "",
     maxAmount: "",
     startDate: "",
@@ -47,41 +45,37 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   });
 
   useEffect(() => {
+    console.log("Received transactions:", transactions); // Debug log
     setFilteredTransactions(transactions);
   }, [transactions]);
 
   const filterTransactions = (t: FinancialTransaction) => {
-    const date = new Date(t.date);
-    const monthMatch = filters.month
-      ? date.getMonth() + 1 === parseInt(filters.month)
-      : true;
+    const date = new Date(t.Date);
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid date for transaction ${t.Id}: ${t.Date}`);
+      return false;
+    }
     const minAmountMatch = filters.minAmount
-      ? t.value >= parseFloat(filters.minAmount)
+      ? t.Value >= parseFloat(filters.minAmount)
       : true;
     const maxAmountMatch = filters.maxAmount
-      ? t.value <= parseFloat(filters.maxAmount)
+      ? t.Value <= parseFloat(filters.maxAmount)
       : true;
     const startDateMatch = filters.startDate
-      ? new Date(t.date) >= new Date(filters.startDate)
+      ? new Date(t.Date) >= new Date(filters.startDate)
       : true;
     const endDateMatch = filters.endDate
-      ? new Date(t.date) <= new Date(filters.endDate)
+      ? new Date(t.Date) <= new Date(filters.endDate)
       : true;
-    return (
-      monthMatch &&
-      minAmountMatch &&
-      maxAmountMatch &&
-      startDateMatch &&
-      endDateMatch
-    );
+    return minAmountMatch && maxAmountMatch && startDateMatch && endDateMatch;
   };
 
   const filtered = filteredTransactions.filter(filterTransactions);
 
   const handleDelete = async (id: number) => {
     try {
-      //    await deleteTransaction(id);
-      setFilteredTransactions(filteredTransactions.filter((t) => t.id !== id));
+      await deleteTransaction(id);
+      setFilteredTransactions(filteredTransactions.filter((t) => t.Id !== id));
       toast.success(
         t("success.transaction_deleted") || "Transaction deleted successfully"
       );
@@ -93,21 +87,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     }
   };
 
-  const months = [
-    { value: "1", label: t("charts.months.jan") || "January" },
-    { value: "2", label: t("charts.months.feb") || "February" },
-    { value: "3", label: t("charts.months.mar") || "March" },
-    { value: "4", label: t("charts.months.apr") || "April" },
-    { value: "5", label: t("charts.months.may") || "May" },
-    { value: "6", label: t("charts.months.jun") || "June" },
-    { value: "7", label: t("charts.months.jul") || "July" },
-    { value: "8", label: t("charts.months.aug") || "August" },
-    { value: "9", label: t("charts.months.sep") || "September" },
-    { value: "10", label: t("charts.months.oct") || "October" },
-    { value: "11", label: t("charts.months.nov") || "November" },
-    { value: "12", label: t("charts.months.dec") || "December" },
-  ];
-
   return (
     <Card className="bg-[rgb(19,21,54)] border-none shadow-lg rounded-lg">
       <CardHeader className="pb-4">
@@ -118,26 +97,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="flex flex-col">
-            <Label className="text-white mb-2">
-              {t("charts.months") || "Month"}
-            </Label>
-            <select
-              value={filters.month}
-              onChange={(e) =>
-                setFilters({ ...filters, month: e.target.value })
-              }
-              className="w-full bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
-            >
-              <option value="">{t("all") || "All"}</option>
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="flex flex-col">
             <Label className="text-white mb-2">
               {t("amount") + " Mín." || "Min. Amount"}
@@ -212,51 +172,62 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((transaction) => (
-              <TableRow
-                key={transaction.id}
-                className="border-b border-[rgb(40,42,80)] hover:bg-[rgb(30,32,70)]"
-              >
-                <TableCell className="py-3">
-                  {new Date(transaction.date).toLocaleDateString("pt-BR") ||
-                    "N/A"}
-                </TableCell>
-                <TableCell className="py-3">
-                  {transaction.description || "N/A"}
-                </TableCell>
+            {filtered.length === 0 ? (
+              <TableRow>
                 <TableCell
-                  className={`py-3 ${
-                    transaction.entryType === "C"
-                      ? "text-green-400"
-                      : "text-red-500"
-                  }`}
+                  colSpan={5}
+                  className="py-3 text-center text-gray-400"
                 >
-                  {typeof transaction.value === "number"
-                    ? transaction.value.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })
-                    : "N/A"}
-                </TableCell>
-                <TableCell className="py-3">
-                  {t(
-                    transaction.entryType === "C"
-                      ? "last_incomes"
-                      : "last_expenses"
-                  ) || (transaction.entryType === "C" ? "Income" : "Expense")}
-                </TableCell>
-                <TableCell className="py-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(transaction.id)}
-                    className="hover:bg-red-900/20"
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  {t("no_transactions") || "No transactions found"}
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filtered.map((transaction) => (
+                <TableRow
+                  key={transaction.Id}
+                  className="border-b border-[rgb(40,42,80)] hover:bg-[rgb(30,32,70)]"
+                >
+                  <TableCell className="py-3">
+                    {new Date(transaction.Date).toLocaleDateString("pt-BR") ||
+                      "N/A"}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {transaction.Description || "N/A"}
+                  </TableCell>
+                  <TableCell
+                    className={`py-3 ${
+                      transaction.EntryType === "C"
+                        ? "text-green-400"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {typeof transaction.Value === "number"
+                      ? transaction.Value.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {t(
+                      transaction.EntryType === "C"
+                        ? "last_incomes"
+                        : "last_expenses"
+                    ) || (transaction.EntryType === "C" ? "Income" : "Expense")}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(transaction.Id)}
+                      className="hover:bg-red-900/20"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </CardContent>
