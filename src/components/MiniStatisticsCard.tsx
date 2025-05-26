@@ -75,6 +75,8 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    console.log("formData:", formData);
     setFormData((prev) => ({
       ...prev,
       [name]: name === "amount" ? Number(value) : value,
@@ -227,7 +229,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
                 className="text-gray-400 hover:text-white transition-colors"
                 aria-label={`Edit ${title}`}
               >
-                <Edit2 className="w-4 h-4 mr-2" />
+                {/*  <Edit2 className="w-4 h-4 mr-2" /> */}
               </button>
               <button
                 onClick={handleVoiceInput}

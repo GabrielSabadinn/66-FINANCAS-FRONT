@@ -15,24 +15,28 @@ import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import { deleteTransaction } from "@/services/apiService";
-
-interface FinancialTransaction {
-  Id: number;
-  UserId: number;
-  EntryType: "C" | "D";
-  EntryId: number;
-  Value: number;
-  Description: string;
-  Date: string;
-  Created_At?: string;
-}
+import { FinancialTransaction } from "@/types";
+import TableDialog from "@/components/TableDialog";
+import RegisterDialog from "./RegisterDialog";
 
 interface TransactionTableProps {
   transactions: FinancialTransaction[];
+  title: string;
+  register?: (data: {
+    description: string;
+    amount: number;
+    type?: "income" | "expense";
+  }) => void;
+  hasButton: boolean;
+  type: string;
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
+  title,
+  register,
+  hasButton,
+  type,
 }) => {
   const { t } = useTranslation();
   const [filteredTransactions, setFilteredTransactions] =
@@ -51,6 +55,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const filterTransactions = (t: FinancialTransaction) => {
     const date = new Date(t.Date);
+
     if (isNaN(date.getTime())) {
       console.warn(`Invalid date for transaction ${t.Id}: ${t.Date}`);
       return false;
@@ -92,8 +97,24 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
           <CardTitle className="text-2xl text-white font-semibold">
-            {t("recent_transactions") || "Recent Transactions"}
+            {title}
           </CardTitle>
+          {
+            hasButton ? <RegisterDialog
+              onSave={register}
+              initialData={{
+                Id: 0,
+                Value: 0,
+                Date: "",
+                Description: "",
+                Created_at: "",
+                UserId: 0,
+                EntryId: 0,
+                EntryType: "C",
+              }}
+              title={title}
+            /> : <></>
+          }
         </div>
       </CardHeader>
       <CardContent>
@@ -195,17 +216,16 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     {transaction.Description || "N/A"}
                   </TableCell>
                   <TableCell
-                    className={`py-3 ${
-                      transaction.EntryType === "C"
-                        ? "text-green-400"
-                        : "text-red-500"
-                    }`}
+                    className={`py-3 ${transaction.EntryType === "C"
+                      ? "text-green-400"
+                      : "text-red-500"
+                      }`}
                   >
                     {typeof transaction.Value === "number"
                       ? transaction.Value.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })
+                        style: "currency",
+                        currency: "BRL",
+                      })
                       : "N/A"}
                   </TableCell>
                   <TableCell className="py-3">

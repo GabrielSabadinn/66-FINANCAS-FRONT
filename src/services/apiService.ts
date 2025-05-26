@@ -3,6 +3,7 @@ import { authService } from "./authService";
 import { FinancialTransaction, User } from "@/types";
 
 const API_BASE_URL = "http://localhost:3000/api";
+// const API_BASE_URL = "http://172.35.10.18:3000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -58,23 +59,31 @@ export const fetchBalance = async (
   return response.data;
 };
 
+// export const fetchTransactions = async (
+//   userId: number
+// ): Promise<FinancialTransaction[]> => {
+//   const response = await api.get(`/bank-statements?userId=${userId}`);
+//   return response.data;
+// };
+
 export const fetchTransactions = async (
-  userId: number
+  userId: number,
+  entryId?: number | null
 ): Promise<FinancialTransaction[]> => {
-  const response = await api.get(`/bank-statements?userId=${userId}`);
+  const response = await api.get(`/bank-statements?userId=${userId}&entryId=${entryId}`);
   return response.data;
 };
 
 export const createTransaction = async (
-  transaction: Omit<FinancialTransaction, "id" | "created_at">
+  transaction: Omit<FinancialTransaction, "Id" | "Created_at">
 ): Promise<FinancialTransaction> => {
   const payload = {
-    userId: transaction.userId,
-    entryType: transaction.entryType,
-    entryId: transaction.entryId,
-    value: transaction.value,
-    description: transaction.description,
-    date: transaction.date,
+    userId: transaction.UserId,
+    entryType: transaction.EntryType,
+    entryId: transaction.EntryId,
+    value: transaction.Value,
+    description: transaction.Description,
+    date: transaction.Date,
   };
   console.log("API createTransaction payload:", payload);
   const response = await api.post("/bank-statements", payload);
@@ -160,7 +169,7 @@ export const uploadImage = async (file: File): Promise<{ path: string }> => {
     });
     console.log("Upload response:", response.data);
     return response.data;
-  } catch (err) {
+  } catch (err: any) {
     console.error("Image upload failed:", err.response?.data || err.message);
     throw err;
   }

@@ -1,12 +1,12 @@
 export interface FinancialTransaction {
-  id: number;
-  userId: number;
-  entryType: "C" | "D";
-  entryId: number;
-  value: number;
-  description: string;
-  date: string;
-  created_at?: string;
+  Id: number;
+  UserId: number;
+  EntryType: "C" | "D";
+  EntryId: number;
+  Value: number;
+  Description: string;
+  Date: string;
+  Created_at?: string;
 }
 
 export interface User {

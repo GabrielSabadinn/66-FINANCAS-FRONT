@@ -88,9 +88,8 @@ const FixedCostTable: React.FC = () => {
           t("warnings.invalid_fixed_costs_filtered", {
             count: mockFixedCosts.length - validFixedCosts.length,
           }) ||
-            `Filtered out ${
-              mockFixedCosts.length - validFixedCosts.length
-            } invalid fixed costs`
+          `Filtered out ${mockFixedCosts.length - validFixedCosts.length
+          } invalid fixed costs`
         );
       }
       setFixedCosts(validFixedCosts);
@@ -155,8 +154,8 @@ const FixedCostTable: React.FC = () => {
           isEdit && item.id
             ? item.id
             : fixedCosts.length
-            ? Math.max(...fixedCosts.map((f) => f.id)) + 1
-            : 1,
+              ? Math.max(...fixedCosts.map((f) => f.id)) + 1
+              : 1,
         description: item.description || "Unnamed Cost",
         amount: item.amount || 0,
         dueDate: item.dueDate || new Date().toISOString().split("T")[0],
@@ -181,8 +180,8 @@ const FixedCostTable: React.FC = () => {
       console.error("Error saving fixed cost:", err);
       setError(
         err.message ||
-          t("errors.save_fixed_cost_failed") ||
-          "Failed to save fixed cost"
+        t("errors.save_fixed_cost_failed") ||
+        "Failed to save fixed cost"
       );
       toast.error(
         t("errors.save_fixed_cost_failed") || "Failed to save fixed cost"
@@ -209,8 +208,8 @@ const FixedCostTable: React.FC = () => {
       console.error("Error deleting fixed cost:", err);
       setError(
         err.message ||
-          t("errors.delete_fixed_cost_failed") ||
-          "Failed to delete fixed cost"
+        t("errors.delete_fixed_cost_failed") ||
+        "Failed to delete fixed cost"
       );
       toast.error(
         t("errors.delete_fixed_cost_failed") || "Failed to delete fixed cost"
@@ -261,8 +260,8 @@ const FixedCostTable: React.FC = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="flex flex-col">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {/* <div className="flex flex-col">
             <Label className="text-white mb-2">
               {t("charts.months") || "Month"}
             </Label>
@@ -280,7 +279,7 @@ const FixedCostTable: React.FC = () => {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
           <div className="flex flex-col">
             <Label className="text-white mb-2">
               {t("amount") + " Mín." || "Min. Amount"}
@@ -363,9 +362,9 @@ const FixedCostTable: React.FC = () => {
                 <TableCell className="text-red-500 py-3">
                   {typeof cost.amount === "number"
                     ? cost.amount.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })
+                      style: "currency",
+                      currency: "BRL",
+                    })
                     : "N/A"}
                 </TableCell>
                 <TableCell className="py-3">{cost.dueDate || "N/A"}</TableCell>

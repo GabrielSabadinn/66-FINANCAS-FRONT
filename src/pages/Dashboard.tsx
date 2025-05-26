@@ -14,17 +14,7 @@ import {
   fetchTransactions,
   createTransaction,
 } from "@/services/apiService";
-
-interface FinancialTransaction {
-  Id: number;
-  UserId: number;
-  EntryType: "C" | "D";
-  EntryId: number;
-  Value: number;
-  Description: string;
-  Date: string;
-  Created_At?: string;
-}
+import { FinancialTransaction } from "@/types";
 
 interface LineChartData {
   name: string;
@@ -41,10 +31,12 @@ export default function Dashboard() {
   const { isAuthenticated, userId, logout } = useAuth();
 
   const [todayMoney, setTodayMoney] = useState(0);
-  const [futureMoney, setFutureMoney] = useState(200000);
-  const [investmentsMoney, setInvestmentsMoney] = useState(3020);
-  const [fixedCosts, setFixedCosts] = useState(173000);
-  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [futureMoney, setFutureMoney] = useState(0);
+  const [investmentsMoney, setInvestmentsMoney] = useState(0);
+  const [fixedCosts, setFixedCosts] = useState(0);
+  const [transactions, setTransactions] = useState<Array<FinancialTransaction>>(
+    []
+  );
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -58,9 +50,34 @@ export default function Dashboard() {
         throw new Error("No user ID found");
       }
       const balanceData = await fetchBalance(userId);
+      console.log("Fetched balance in Dashboard:", balanceData);
+
       setTodayMoney(balanceData.balance);
-      const validTransactions = await fetchTransactions(userId);
+
+      const validTransactions: FinancialTransaction[] = await fetchTransactions(
+        userId
+      );
+
       console.log("Fetched transactions in Dashboard:", validTransactions);
+      var totalInvestments = 0;
+      var totalFuture = 0;
+      var totalFixedCosts = 0;
+
+      for (var i = 0; i < validTransactions.length; i++) {
+        if (validTransactions[i].EntryId == 3) {
+          totalInvestments += validTransactions[i].Value;
+        }
+        if (validTransactions[i].EntryId == 4) {
+          totalFuture += validTransactions[i].Value;
+        }
+        if (validTransactions[i].EntryId == 2) {
+          totalFixedCosts += validTransactions[i].Value;
+        }
+      }
+
+      setInvestmentsMoney(totalInvestments);
+      setFutureMoney(totalFuture);
+      setFixedCosts(totalFixedCosts);
       setTransactions(validTransactions);
     } catch (err) {
       console.error("Failed to fetch data:", err);
@@ -75,7 +92,7 @@ export default function Dashboard() {
     data: {
       description: string;
       amount: number | string;
-      type?: "income" | "expense";
+      type: "income" | "expense";
     }
   ) => {
     if (!isAuthenticated || !userId) {
@@ -86,8 +103,8 @@ export default function Dashboard() {
       const entryIdMap: { [key: string]: number } = {
         [t("today_money")]: 1,
         [t("future_money")]: 4,
-        [t("investments_money")]: 2,
-        [t("fixed_costs")]: 3,
+        [t("investments_money")]: 3,
+        [t("fixed_costs")]: 2,
       };
       const entryId = entryIdMap[title];
       if (!entryId) {
@@ -108,6 +125,7 @@ export default function Dashboard() {
       };
       console.log("Sending transaction payload:", newTransaction);
       const createdTransaction = await createTransaction(newTransaction);
+
       setTransactions([...transactions, createdTransaction]);
       if (title === t("today_money")) {
         setTodayMoney((prev) =>
@@ -256,23 +274,29 @@ export default function Dashboard() {
           percentage="-2%"
           percentageColor="text-red-500"
           icon={Globe}
-          onAdd={(data) => handleAdd(t("future_money"), data)}
+          onAdd={(data) =>
+            handleAdd(t("future_money"), { ...data, type: "income" })
+          }
         />
         <MiniStatisticsCard
           title={t("investments_money")}
           value={investmentsMoney}
-          percentage="-14%"
-          percentageColor="text-red-500"
+          percentage="14%"
+          percentageColor="text-green-400"
           icon={FileText}
-          onAdd={(data) => handleAdd(t("investments_money"), data)}
+          onAdd={(data) =>
+            handleAdd(t("investments_money"), { ...data, type: "income" })
+          }
         />
         <MiniStatisticsCard
           title={t("fixed_costs")}
           value={fixedCosts}
-          percentage="+8%"
+          //  percentage="+8%"
           percentageColor="text-green-400"
           icon={ShoppingCart}
-          onAdd={(data) => handleAdd(t("fixed_costs"), data)}
+          onAdd={(data) =>
+            handleAdd(t("fixed_costs"), { ...data, type: "expense" })
+          }
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr] gap-3 mb-4 md:gap-4 md:mb-6">
@@ -325,7 +349,13 @@ export default function Dashboard() {
           data={barData}
         />
       </div>
-      <TransactionTable transactions={transactions} />
+      <TransactionTable
+        transactions={transactions}
+        title={t("recent_transactions") || "Recent Transactions"}
+        register={() => {}}
+        hasButton={false}
+        type="transaction"
+      />
     </div>
   );
 }

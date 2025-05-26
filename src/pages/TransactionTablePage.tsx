@@ -4,17 +4,18 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchTransactions } from "@/services/apiService";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { FinancialTransaction } from "@/types";
 
-interface FinancialTransaction {
-  id: number;
-  userId: number;
-  entryType: "C" | "D";
-  entryId: number;
-  value: number;
-  description: string;
-  date: string;
-  created_at?: string;
-}
+// interface FinancialTransaction {
+//   id: number;
+//   userId: number;
+//   entryType: "C" | "D";
+//   entryId: number;
+//   value: number;
+//   description: string;
+//   date: string;
+//   created_at?: string;
+// }
 
 const TransactionTablePage: React.FC = () => {
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ const TransactionTablePage: React.FC = () => {
       style={backgroundStyle}
     >
       <div className="max-w-4xl mx-auto w-full pt-14 md:pt-16">
-        <TransactionTable transactions={transactions} />
+        <TransactionTable transactions={transactions} title={t("recent_transactions") || "Recent Transactions"} register={() => { }} hasButton={false} type="transaction" />
       </div>
     </div>
   );
