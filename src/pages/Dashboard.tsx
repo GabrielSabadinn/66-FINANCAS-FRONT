@@ -91,7 +91,7 @@ export default function Dashboard() {
     title: string,
     data: {
       description: string;
-      amount: number | string;
+      amount: number | undefined;
       type: "income" | "expense";
     }
   ) => {
@@ -110,11 +110,10 @@ export default function Dashboard() {
       if (!entryId) {
         throw new Error(`Invalid title: ${title}`);
       }
-      const amount =
-        typeof data.amount === "string" ? parseFloat(data.amount) : data.amount;
-      if (isNaN(amount)) {
+      if (data.amount === undefined || isNaN(data.amount) || data.amount <= 0) {
         throw new Error("Invalid amount");
       }
+      const amount = data.amount;
       const newTransaction: Omit<FinancialTransaction, "Id" | "Created_At"> = {
         UserId: parseInt(userId.toString()), // Ensure integer
         EntryType: data.type === "income" ? "C" : "D",
@@ -263,7 +262,7 @@ export default function Dashboard() {
         <MiniStatisticsCard
           title={t("today_money")}
           value={todayMoney}
-          percentage="+55%"
+          // percentage="+55%"
           percentageColor="text-green-400"
           icon={Wallet}
           onAdd={(data) => handleAdd(t("today_money"), data)}
@@ -271,7 +270,7 @@ export default function Dashboard() {
         <MiniStatisticsCard
           title={t("future_money")}
           value={futureMoney}
-          percentage="-2%"
+          //   percentage="-2%"
           percentageColor="text-red-500"
           icon={Globe}
           onAdd={(data) =>
@@ -281,7 +280,7 @@ export default function Dashboard() {
         <MiniStatisticsCard
           title={t("investments_money")}
           value={investmentsMoney}
-          percentage="14%"
+          //  percentage="14%"
           percentageColor="text-green-400"
           icon={FileText}
           onAdd={(data) =>

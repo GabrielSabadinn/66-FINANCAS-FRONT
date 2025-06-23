@@ -52,7 +52,7 @@ export const authService = {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, payload);
       return response.data;
     } catch (error) {
-      throw new Error("Invalid email or password");
+      throw new Error("E-mail ou senha inválidos por favor tente novamente");
     }
   },
 

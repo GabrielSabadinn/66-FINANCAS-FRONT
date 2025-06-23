@@ -1,4 +1,3 @@
-// src/components/MiniStatisticsCard.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon, Mic, Plus, Edit2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +16,7 @@ import { toast } from "react-toastify";
 
 interface FormData {
   description: string;
-  amount: number;
+  amount: number | undefined;
   type: "income" | "expense";
 }
 
@@ -29,7 +28,7 @@ interface MiniStatisticsCardProps {
   icon: LucideIcon;
   onAdd?: (data: {
     description: string;
-    amount: number;
+    amount: number | undefined;
     type?: "income" | "expense";
   }) => void;
 }
@@ -47,7 +46,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     description: "",
-    amount: 0,
+    amount: undefined,
     type: "income",
   });
   const [isListening, setIsListening] = useState(false);
@@ -75,16 +74,19 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-
-    console.log("formData:", formData);
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "amount" ? Number(value) : value,
+      [name]:
+        name === "amount" ? (value === "" ? undefined : Number(value)) : value,
     }));
   };
 
   const handleAddSubmit = () => {
-    if (formData.description && formData.amount > 0) {
+    if (
+      formData.description &&
+      formData.amount !== undefined &&
+      formData.amount > 0
+    ) {
       if (onAdd) {
         onAdd({
           description: formData.description,
@@ -93,7 +95,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
         });
       }
       setIsOpen(false);
-      setFormData({ description: "", amount: 0, type: "income" });
+      setFormData({ description: "", amount: undefined, type: "income" });
     } else {
       toast.error(t("errors.invalid_input"));
     }
@@ -101,59 +103,131 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
 
   const handleVoiceInput = () => {
     if (!recognition || !onAdd) {
-      toast.error(t("errors.speech_not_supported"));
+      toast.error(
+        t("errors.speech_not_supported") ||
+          "Speech recognition is not supported in your browser."
+      );
       return;
     }
 
-    setIsListening(true);
-    recognition.start();
+    // Check microphone permission before starting recognition
+    navigator.permissions
+      .query({ name: "microphone" as PermissionName })
+      .then((permissionStatus) => {
+        if (permissionStatus.state === "denied") {
+          toast.error(
+            t("errors.microphone_permission_denied") ||
+              "Microphone access is blocked. Please allow microphone permissions in your browser settings."
+          );
+          return;
+        }
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript.toLowerCase();
-      console.log("Voice input:", transcript);
+        setIsListening(true);
+        recognition.start();
 
-      let description = transcript;
-      let amount = 0;
-      let type: "income" | "expense" = "expense";
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript
+            .toLowerCase()
+            .trim();
+          console.log("Voice input:", transcript);
 
-      const numberMatch = transcript.match(/\d+/);
-      if (numberMatch) {
-        amount = parseInt(numberMatch[0], 10);
-        description = transcript.replace(numberMatch[0], "").trim();
-      }
+          // Split the transcript into words
+          const words = transcript.split(/\s+/);
 
-      if (
-        transcript.includes("income") ||
-        transcript.includes("salary") ||
-        transcript.includes("earned") ||
-        transcript.includes("receita") ||
-        transcript.includes("salário")
-      ) {
-        type = "income";
-      }
+          // Initialize variables
+          let description = "";
+          let amount: number | undefined = undefined;
+          let type: "income" | "expense" = "expense";
 
-      if (description && amount > 0) {
-        onAdd({
-          description: description || "Voice transaction",
-          amount,
-          type: title === t("today_money") ? type : undefined,
-        });
-        toast.success(t("success.transaction_created"));
-      } else {
-        toast.error(t("errors.invalid_voice_input"));
-      }
-      setIsListening(false);
-    };
+          // Define keywords for income and expense
+          const incomeKeywords = [
+            "income",
+            "salary",
+            "earned",
+            "receita",
+            "salário",
+            "ganho",
+          ];
+          const expenseKeywords = ["expense", "despesa", "gasto", "spent"];
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error:", event.error);
-      setIsListening(false);
-      toast.error(t("errors.speech_recognition_failed"));
-    };
+          // Find the amount (first number in the transcript)
+          const numberIndex = words.findIndex((word) => /^\d+$/.test(word));
+          if (numberIndex !== -1) {
+            amount = parseInt(words[numberIndex], 10);
+            // Description is everything before the number
+            description = words.slice(0, numberIndex).join(" ").trim();
+            // Type is the first recognized keyword after the number
+            const remainingWords = words.slice(numberIndex + 1);
+            const typeWord = remainingWords.find(
+              (word) =>
+                incomeKeywords.includes(word) || expenseKeywords.includes(word)
+            );
+            if (typeWord) {
+              type = incomeKeywords.includes(typeWord) ? "income" : "expense";
+            }
+          } else {
+            // If no number is found, assume the last word is the type and the rest is description
+            const lastWord = words[words.length - 1];
+            if (
+              incomeKeywords.includes(lastWord) ||
+              expenseKeywords.includes(lastWord)
+            ) {
+              type = incomeKeywords.includes(lastWord) ? "income" : "expense";
+              description = words.slice(0, -1).join(" ").trim();
+            } else {
+              description = transcript;
+            }
+          }
 
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+          // Validate and submit
+          if (description && amount !== undefined && amount > 0) {
+            onAdd({
+              description: description || "Voice transaction",
+              amount,
+              type: title === t("today_money") ? type : undefined,
+            });
+            toast.success(t("success.transaction_created"));
+          } else {
+            toast.error(
+              t("errors.invalid_voice_input") ||
+                "Please say: [description] [amount] [income/expense]"
+            );
+          }
+          setIsListening(false);
+        };
+
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error("Speech recognition error:", event.error);
+          setIsListening(false);
+          if (event.error === "service-not-allowed") {
+            toast.error(
+              t("errors.microphone_permission_denied") ||
+                "Microphone access is blocked. Please allow microphone permissions in your browser settings."
+            );
+          } else if (event.error === "no-speech") {
+            toast.error(
+              t("errors.no_speech_detected") ||
+                "No speech was detected. Please try again."
+            );
+          } else {
+            toast.error(
+              t("errors.speech_recognition_failed") ||
+                "Speech recognition failed. Please try again."
+            );
+          }
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+      })
+      .catch((err) => {
+        console.error("Permission query error:", err);
+        toast.error(
+          t("errors.speech_recognition_failed") ||
+            "Failed to check microphone permissions. Please ensure microphone access is allowed."
+        );
+      });
   };
 
   return (
@@ -200,7 +274,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
                       type="number"
                       placeholder={t("amount")}
                       name="amount"
-                      value={formData.amount}
+                      value={formData.amount ?? ""}
                       onChange={handleChange}
                       className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
                     />
@@ -229,7 +303,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
                 className="text-gray-400 hover:text-white transition-colors"
                 aria-label={`Edit ${title}`}
               >
-                {/*  <Edit2 className="w-4 h-4 mr-2" /> */}
+                {/* <Edit2 className="w-4 h-4 mr-2" /> */}
               </button>
               <button
                 onClick={handleVoiceInput}

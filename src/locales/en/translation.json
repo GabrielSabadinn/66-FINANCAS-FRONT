@@ -86,6 +86,7 @@
   "loading": "Loading...",
   "satisfaction_rate_description": "Economy",
   "set_financial_goal": "Add your financial goal",
+  "add": "Add",
   "errors": {
     "name_required": "Name is required",
     "valid_email_required": "Valid email is required",
@@ -95,7 +96,8 @@
     "login_failed": "Login failed. Please check your credentials.",
     "unexpected_error": "An unexpected error occurred.",
     "speech_not_supported": "Speech recognition is not supported in your browser.",
-    "speech_recognition_failed": "Failed to recognize speech. Please try again."
+    "speech_recognition_failed": "Failed to recognize speech. Please try again.",
+    "invalid_voice_input": "Please say: [description] [amount] [income/expense]"
   },
 
   "success": {
