@@ -3,7 +3,6 @@ import { authService } from "./authService";
 import { FinancialTransaction, User } from "@/types";
 
 const API_BASE_URL = "http://localhost:3000/api";
-// const API_BASE_URL = "http://172.35.10.18:3000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -85,8 +84,16 @@ export const createTransaction = async (
   return response.data;
 };
 
-export const deleteTransaction = async (id: number): Promise<void> => {
-  await api.delete(`/bank-statements/${id}`);
+export const deleteTransaction = async (
+  entryId: number,
+  date: Date
+): Promise<void> => {
+  await api.delete(`/bank-statements`, {
+    params: {
+      entryId,
+      date,
+    },
+  });
 };
 
 export const fetchUser = async (userId: number): Promise<User> => {

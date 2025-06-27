@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
+import { metaService } from "@/services/metaService";
 
 interface FinancialFreedomCardProps {
   t: (key: string) => string;
   moneySaved?: number;
   moneyGoal?: number;
-  percentage?: number;
+  percentage: number;
   onGoalUpdate?: (newGoal: number) => void;
 }
 
@@ -28,23 +29,28 @@ export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
   onGoalUpdate,
 }) => {
   const { t: translate } = useTranslation();
-  const calculatedPercentage = percentage ?? (moneySaved / moneyGoal) * 100;
-  const formattedPercentage = Math.round(calculatedPercentage);
+  // const calculatedPercentage = percentage ?? (moneySaved / moneyGoal) * 100;
+  const formattedPercentage = Math.round(percentage);
 
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - calculatedPercentage / 100);
+  const strokeDashoffset = circumference * (1 - percentage / 100);
 
   const [isOpen, setIsOpen] = useState(false);
   const [newGoal, setNewGoal] = useState(moneyGoal.toString());
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const userId = localStorage.getItem("userId");
+    const accessToken = localStorage.getItem("accessToken");
     const goalValue = parseFloat(newGoal);
-    if (!isNaN(goalValue) && goalValue > 0 && onGoalUpdate) {
-      onGoalUpdate(goalValue);
+
+    if (!isNaN(goalValue) && goalValue > 0 && (userId != null && accessToken != null)) {
+
+      await metaService.putMeta(goalValue, Number(userId), accessToken);
+      // onGoalUpdate(goalValue);
     }
     setIsOpen(false);
-    setNewGoal(moneyGoal.toString());
+    setNewGoal(goalValue.toString());
   };
 
   return (

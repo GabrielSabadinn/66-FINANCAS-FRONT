@@ -115,7 +115,7 @@ export default function Profile() {
     if (!userData || !userId) return;
     if (!userData.name || userData.name.trim() === "") {
       toast.error(t("errors.name_required") || "Name is required", {
-        position: "top-center",
+        position: "top-right",
         autoClose: 3000,
       });
       return;
@@ -123,7 +123,7 @@ export default function Profile() {
 
     setSaving(true);
     const toastId = toast.loading(t("saving_changes") || "Saving changes...", {
-      position: "top-center",
+      position: "top-right",
     });
 
     try {

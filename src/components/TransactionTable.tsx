@@ -77,9 +77,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const filtered = filteredTransactions.filter(filterTransactions);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, data: string) => {
     try {
-      await deleteTransaction(id);
+      const date: Date = new Date(data);
+
+      console.log("Deleted transaction with ID:", id);
+
+      await deleteTransaction(id, date);
+
       setFilteredTransactions(filteredTransactions.filter((t) => t.Id !== id));
       toast.success(
         t("success.transaction_deleted") || "Transaction deleted successfully"
@@ -239,7 +244,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(transaction.Id)}
+                      onClick={() => handleDelete(transaction.EntryId, transaction.Date)}
                       className="hover:bg-red-900/20"
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />

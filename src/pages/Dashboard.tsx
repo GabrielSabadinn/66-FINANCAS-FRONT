@@ -15,6 +15,7 @@ import {
   createTransaction,
 } from "@/services/apiService";
 import { FinancialTransaction } from "@/types";
+import { authService } from "@/services/authService";
 
 interface LineChartData {
   name: string;
@@ -37,6 +38,9 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Array<FinancialTransaction>>(
     []
   );
+  const [meta, setMeta] = useState(0);
+  const [percentageMeta, setPercentageMeta] = useState(0);
+  const [moneySaved, setMoneySaved] = useState(0);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -50,15 +54,25 @@ export default function Dashboard() {
         throw new Error("No user ID found");
       }
       const balanceData = await fetchBalance(userId);
-      console.log("Fetched balance in Dashboard:", balanceData);
+      // console.log("Fetched balance in Dashboard:", balanceData);
 
       setTodayMoney(balanceData.balance);
+
+      const authToken = localStorage.getItem("accessToken");
+      if (!authToken) {
+        throw new Error("No access token found in localStorage");
+      }
+
+      const userInfo: any = await authService.getUserById(userId, authToken);
+      console.log("Fetched user info in Dashboard:", userInfo);
 
       const validTransactions: FinancialTransaction[] = await fetchTransactions(
         userId
       );
 
-      console.log("Fetched transactions in Dashboard:", validTransactions);
+      handleMeta(userInfo.meta, validTransactions);
+
+      // console.log("Fetched transactions in Dashboard:", validTransactions);
       var totalInvestments = 0;
       var totalFuture = 0;
       var totalFixedCosts = 0;
@@ -85,6 +99,20 @@ export default function Dashboard() {
         t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
       );
     }
+  };
+
+  const handleMeta = (meta: number | null, transactions: FinancialTransaction[]) => {
+    const totalSpent: number = transactions
+      .filter((transaction) => transaction.EntryType === "C")
+      .reduce((sum, transaction) => sum + transaction.Value, 0);
+
+    meta = meta || 0;
+
+    setMoneySaved(totalSpent);
+    setMeta(meta);
+
+    const percentage = meta > 0 ? (totalSpent / meta) * 100 : 100;
+    setPercentageMeta(percentage);
   };
 
   const handleAdd = async (
@@ -137,6 +165,8 @@ export default function Dashboard() {
       } else if (title === t("fixed_costs")) {
         setFixedCosts((prev) => prev + amount);
       }
+
+      fetchData();
       toast.success(
         t("success.transaction_created") || "Transaction created successfully"
       );
@@ -302,9 +332,9 @@ export default function Dashboard() {
         <SatisfactionRateCard t={t} />
         <FinancialFreedomCard
           t={t}
-          moneySaved={6214}
-          moneyGoal={10000}
-          percentage={64}
+          moneySaved={moneySaved}
+          moneyGoal={meta}
+          percentage={percentageMeta}
         />
       </div>
       <div className="flex flex-col xl:flex-row gap-2 mb-3 md:gap-3 md:mb-4">
@@ -315,9 +345,8 @@ export default function Dashboard() {
           subtitle={
             <>
               <span
-                className={`font-bold ${
-                  linePercentage >= 0 ? "text-green-500" : "text-red-500"
-                }`}
+                className={`font-bold ${linePercentage >= 0 ? "text-green-500" : "text-red-500"
+                  }`}
               >
                 {linePercentage >= 0 ? "+" : ""}
                 {linePercentage.toFixed(1)}% {t("more")}
@@ -334,9 +363,8 @@ export default function Dashboard() {
           subtitle={
             <>
               <span
-                className={`font-bold ${
-                  barPercentage >= 0 ? "text-green-400" : "text-red-500"
-                }`}
+                className={`font-bold ${barPercentage >= 0 ? "text-green-400" : "text-red-500"
+                  }`}
               >
                 {barPercentage >= 0 ? "+" : ""}
                 {barPercentage.toFixed(1)}%
@@ -350,7 +378,7 @@ export default function Dashboard() {
       <TransactionTable
         transactions={transactions}
         title={t("recent_transactions") || "Recent Transactions"}
-        register={() => {}}
+        register={() => { }}
         hasButton={false}
         type="transaction"
       />
