@@ -70,7 +70,9 @@ export const fetchTransactions = async (
   userId: number,
   entryId?: number | null
 ): Promise<FinancialTransaction[]> => {
-  const response = await api.get(`/bank-statements?userId=${userId}&entryId=${entryId}`);
+  const response = await api.get(
+    `/bank-statements?userId=${userId}&entryId=${entryId}`
+  );
   return response.data;
 };
 
@@ -104,6 +106,7 @@ export const fetchUser = async (userId: number): Promise<User> => {
     pathImageIcon: data.PathImageIcon,
     pathImageBanner: data.PathImageBanner,
     createdAt: data.CreatedAt,
+    meta: data.Meta,
   };
 };
 

@@ -16,4 +16,5 @@ export interface User {
   pathImageIcon?: string;
   pathImageBanner?: string;
   createdAt?: string;
+  meta?: number;
 }
