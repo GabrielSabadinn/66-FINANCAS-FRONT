@@ -110,5 +110,7 @@
     "description": "Are you sure you want to log out? This will end your current session.",
     "cancel": "Cancel",
     "confirm": "Log Out"
-  }
+  },
+  "saving": "Saving...",
+  "saving_changes": "Saving changes..."
 }

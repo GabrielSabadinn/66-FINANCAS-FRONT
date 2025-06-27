@@ -5,18 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User as UserIcon, Camera, Save } from "lucide-react";
+import { User as UserIcon, Camera, Save, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
-import { fetchUser, updateUser, uploadImage } from "@/services/apiService";
+import { fetchUser, updateUser } from "@/services/apiService";
 import { User } from "@/types";
 
 export default function Profile() {
   const { t } = useTranslation();
   const { userId, isAuthenticated, logout } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
-  const [tempProfileImage, setTempProfileImage] = useState<File | null>(null);
-  const [tempDashboardImage, setTempDashboardImage] = useState<File | null>(
+  const [tempProfileImage, setTempProfileImage] = useState<string | null>(null);
+  const [tempDashboardImage, setTempDashboardImage] = useState<string | null>(
     null
   );
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
@@ -26,18 +26,22 @@ export default function Profile() {
     string | null
   >(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
       fetchUserData();
     }
+    return () => {
+      if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+      if (dashboardImagePreview) URL.revokeObjectURL(dashboardImagePreview);
+    };
   }, [isAuthenticated, userId]);
 
   const fetchUserData = async () => {
     try {
       if (!userId) throw new Error("No user ID found");
       const user = await fetchUser(userId);
-      console.log("Fetched user data:", user);
       setUserData(user);
       setLoading(false);
     } catch (err) {
@@ -62,8 +66,23 @@ export default function Profile() {
   const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setTempProfileImage(file);
-      setProfileImagePreview(URL.createObjectURL(file));
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(t("errors.file_too_large") || "File size exceeds 5MB");
+        return;
+      }
+      if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+        toast.error(
+          t("errors.invalid_file_type") || "Only JPEG, JPG, or PNG allowed"
+        );
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        setTempProfileImage(base64String);
+        setProfileImagePreview(base64String);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -72,48 +91,87 @@ export default function Profile() {
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      setTempDashboardImage(file);
-      setDashboardImagePreview(URL.createObjectURL(file));
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(t("errors.file_too_large") || "File size exceeds 5MB");
+        return;
+      }
+      if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+        toast.error(
+          t("errors.invalid_file_type") || "Only JPEG, JPG, or PNG allowed"
+        );
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        setTempDashboardImage(base64String);
+        setDashboardImagePreview(base64String);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSave = async () => {
     if (!userData || !userId) return;
     if (!userData.name || userData.name.trim() === "") {
-      toast.error(t("errors.name_required") || "Name is required");
+      toast.error(t("errors.name_required") || "Name is required", {
+        position: "top-center",
+        autoClose: 3000,
+      });
       return;
     }
+
+    setSaving(true);
+    const toastId = toast.loading(t("saving_changes") || "Saving changes...", {
+      position: "top-center",
+    });
+
     try {
-      let pathImageIcon = userData.pathImageIcon;
-      let pathImageBanner = userData.pathImageBanner;
-
-      if (tempProfileImage) {
-        const { path } = await uploadImage(tempProfileImage);
-        pathImageIcon = path;
-      }
-      if (tempDashboardImage) {
-        const { path } = await uploadImage(tempDashboardImage);
-        pathImageBanner = path;
-      }
-
       const updatedUser = await updateUser(userId, {
         name: userData.name,
         email: userData.email,
-        pathImageIcon,
-        pathImageBanner,
+        pathImageIcon: tempProfileImage || userData.pathImageIcon,
+        pathImageBanner: tempDashboardImage || userData.pathImageBanner,
       });
 
-      console.log("Updated user data:", updatedUser);
       localStorage.setItem("userName", updatedUser.name);
+
+      // Remova completamente o armazenamento da imagem no localStorage
+      // Em vez disso, apenas armazene uma flag indicando que há uma imagem
+      if (tempDashboardImage || updatedUser.pathImageBanner) {
+        localStorage.setItem("hasBannerImage", "true");
+      } else {
+        localStorage.removeItem("hasBannerImage");
+      }
+
       setUserData(updatedUser);
       setTempProfileImage(null);
       setTempDashboardImage(null);
       setProfileImagePreview(null);
       setDashboardImagePreview(null);
-      toast.success(t("profile_saved") || "Profile saved successfully");
-    } catch (err) {
+
+      toast.update(toastId, {
+        render: t("profile_saved") || "Profile saved successfully",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+        closeButton: true,
+      });
+    } catch (err: any) {
       console.error("Failed to save profile:", err);
-      toast.error(t("errors.save_profile_failed") || "Failed to save profile");
+      const errorMessage =
+        err.message ||
+        t("errors.save_profile_failed") ||
+        "Failed to save profile";
+      toast.update(toastId, {
+        render: errorMessage,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000, // Aumente o tempo para erros
+        closeButton: true,
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -152,7 +210,6 @@ export default function Profile() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Seção de Imagem de Perfil */}
             <div className="flex flex-col items-center">
               <Avatar className="w-24 h-24 mb-4">
                 <AvatarImage
@@ -177,13 +234,12 @@ export default function Profile() {
               <Input
                 id="profileImage"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png"
                 className="hidden"
                 onChange={handleProfileImageUpload}
               />
             </div>
 
-            {/* Informações do Usuário */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name" className="text-white">
@@ -213,7 +269,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Seção de Imagem do Dashboard */}
             <div className="space-y-4">
               <Label htmlFor="dashboardImage" className="text-white">
                 {t("dashboard_image_label")}
@@ -240,25 +295,33 @@ export default function Profile() {
                 <Input
                   id="dashboardImage"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png"
                   className="hidden"
                   onChange={handleDashboardImageUpload}
                 />
               </div>
             </div>
 
-            {/* Botão de Salvar */}
             <Button
               onClick={handleSave}
+              disabled={saving}
               className="w-full bg-violet-600 hover:bg-violet-700 text-white"
             >
-              <Save className="w-5 h-5 mr-2" />
-              {t("save_changes")}
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  {t("saving") || "Saving..."}
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 mr-2" />
+                  {t("save_changes")}
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Extra: Seção de Estatísticas Rápidas */}
         <Card className="mt-6 bg-[rgb(19,21,54)] border-none">
           <CardHeader>
             <CardTitle className="text-lg text-white">
@@ -271,8 +334,7 @@ export default function Profile() {
               <span>{joinedDate}</span>
             </div>
             <div className="flex justify-between text-sm text-gray-400 mt-2">
-              <span>{t("total_transactions2")}</span>
-              <span>145</span>
+              {/*            <span>145</span> */}
             </div>
           </CardContent>
         </Card>

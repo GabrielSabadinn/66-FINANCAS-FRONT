@@ -10,6 +10,7 @@ interface AuthResponse {
     id: number;
     email: string;
     name?: string;
+    pathImageBanner?: string;
   };
 }
 
@@ -28,10 +29,17 @@ interface LoginPayload {
   password: string;
 }
 
-interface User {
+export interface User {
   id: number;
-  email: string;
   name: string;
+  email: string;
+  Pwd?: string;
+  salt?: string;
+  pathImageBanner?: string | null;
+  pathImageIcon?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  meta?: number;
 }
 
 export const authService = {

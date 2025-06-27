@@ -97,7 +97,8 @@
     "unexpected_error": "Ocorreu um erro inesperado.",
     "speech_not_supported": "Reconhecimento de voz não é suportado no seu navegador.",
     "speech_recognition_failed": "Falha ao reconhecer voz. Por favor, tente novamente.",
-    "invalid_voice_input": "Por favor, diga: [descrição] [valor] [receita/despesa]"
+    "invalid_voice_input": "Por favor, diga: [descrição] [valor] [receita/despesa]",
+    "save_profile_failed": "Falha ao salvar perfil"
   },
   "success": {
     "transaction_created": "Transação adicionada com sucesso.",
@@ -113,5 +114,7 @@
   "user": {
     "entries": "Entradas",
     "expenses": "Despesas"
-  }
+  },
+  "saving": "Salvando...",
+  "saving_changes": "Salvando alterações..."
 }

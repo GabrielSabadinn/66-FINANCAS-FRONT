@@ -63,8 +63,21 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
     recognition.lang = t("language_code") || "en-US";
   }
 
-  const formattedValue =
-    typeof value === "number" ? value.toLocaleString("en-US") : value;
+  const formatValue = (val: number | string) => {
+    if (typeof val === "number") {
+      const formatted = val.toLocaleString("en-US");
+      if (val < 0) {
+        return <span className="text-red-500">${formatted}</span>;
+      } else if (val > 0) {
+        return <span className="text-green-400">${formatted}</span>;
+      }
+      // Neutro para valor zero
+      return <span className="text-white">${formatted}</span>;
+    }
+    return val;
+  };
+
+  const formattedValue = formatValue(value);
 
   const handleEditClick = () => {
     navigate("/tables");
@@ -110,7 +123,6 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
       return;
     }
 
-    // Check microphone permission before starting recognition
     navigator.permissions
       .query({ name: "microphone" as PermissionName })
       .then((permissionStatus) => {
@@ -131,15 +143,11 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
             .trim();
           console.log("Voice input:", transcript);
 
-          // Split the transcript into words
           const words = transcript.split(/\s+/);
-
-          // Initialize variables
           let description = "";
           let amount: number | undefined = undefined;
           let type: "income" | "expense" = "expense";
 
-          // Define keywords for income and expense
           const incomeKeywords = [
             "income",
             "salary",
@@ -150,13 +158,10 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
           ];
           const expenseKeywords = ["expense", "despesa", "gasto", "spent"];
 
-          // Find the amount (first number in the transcript)
           const numberIndex = words.findIndex((word) => /^\d+$/.test(word));
           if (numberIndex !== -1) {
             amount = parseInt(words[numberIndex], 10);
-            // Description is everything before the number
             description = words.slice(0, numberIndex).join(" ").trim();
-            // Type is the first recognized keyword after the number
             const remainingWords = words.slice(numberIndex + 1);
             const typeWord = remainingWords.find(
               (word) =>
@@ -166,7 +171,6 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
               type = incomeKeywords.includes(typeWord) ? "income" : "expense";
             }
           } else {
-            // If no number is found, assume the last word is the type and the rest is description
             const lastWord = words[words.length - 1];
             if (
               incomeKeywords.includes(lastWord) ||
@@ -179,7 +183,6 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
             }
           }
 
-          // Validate and submit
           if (description && amount !== undefined && amount > 0) {
             onAdd({
               description: description || "Voice transaction",
@@ -237,7 +240,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
           <div>
             <p className="text-xs text-gray-400 font-bold mb-1">{title}</p>
             <div className="flex items-center gap-1">
-              <p className="text-lg text-white md:text-xl">${formattedValue}</p>
+              <p className="text-lg md:text-xl">{formattedValue}</p>
               {percentage && (
                 <p className={`${percentageColor} font-bold text-xs`}>
                   {percentage}

@@ -59,19 +59,12 @@ export const fetchBalance = async (
   return response.data;
 };
 
-// export const fetchTransactions = async (
-//   userId: number
-// ): Promise<FinancialTransaction[]> => {
-//   const response = await api.get(`/bank-statements?userId=${userId}`);
-//   return response.data;
-// };
-
 export const fetchTransactions = async (
   userId: number,
   entryId?: number | null
 ): Promise<FinancialTransaction[]> => {
   const response = await api.get(
-    `/bank-statements?userId=${userId}&entryId=${entryId}`
+    `/bank-statements?userId=${userId}${entryId ? `&entryId=${entryId}` : ""}`
   );
   return response.data;
 };
@@ -159,21 +152,6 @@ export const updateUser = async (
     pathImageIcon: updatedData.PathImageIcon,
     pathImageBanner: updatedData.PathImageBanner,
     createdAt: updatedData.CreatedAt,
+    meta: updatedData.Meta,
   };
-};
-
-export const uploadImage = async (file: File): Promise<{ path: string }> => {
-  const formData = new FormData();
-  formData.append("image", file);
-  console.log("Uploading image:", file.name);
-  try {
-    const response = await api.post("/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    console.log("Upload response:", response.data);
-    return response.data;
-  } catch (err: any) {
-    console.error("Image upload failed:", err.response?.data || err.message);
-    throw err;
-  }
 };

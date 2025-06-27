@@ -9,7 +9,15 @@ interface FormData {
   email: string;
   password: string;
 }
-
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  pathImageIcon?: string;
+  pathImageBanner?: string;
+  createdAt?: string;
+  meta?: number;
+}
 export const useSignIn = () => {
   const { t } = useTranslation();
   const { login } = useAuth();
@@ -34,7 +42,13 @@ export const useSignIn = () => {
     setSuccess(null);
 
     try {
-      await login(formData.email, formData.password);
+      const userData = await login(formData.email, formData.password);
+
+      if (userData) {
+        localStorage.setItem("userName", userData.name || "");
+        localStorage.setItem("userBannerImage", userData.pathImageBanner || "");
+      }
+
       setSuccess(t("success.login_successful"));
       toast.success(t("success.login_successful"));
       navigate("/dashboard"); // Redirect to dashboard

@@ -56,18 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("userId", decodedUserId.toString());
       localStorage.setItem("userName", user.name || "Nome do cliente");
+
+      // Apenas marque se tem imagem, não armazene a imagem
+      localStorage.setItem(
+        "hasBannerImage",
+        user.pathImageBanner ? "true" : "false"
+      );
+
       setIsAuthenticated(true);
       setUserId(decodedUserId);
       setAuthToken(accessToken);
-      console.log(
-        "Login successful, userId:",
-        decodedUserId,
-        "name:",
-        user.name
-      );
     } catch (error: any) {
       console.error("Login error:", error.message);
-      throw new Error(error.message || "Login failed");
+      throw error;
     }
   };
 
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
+    localStorage.removeItem("userBannerImage");
     setIsAuthenticated(false);
     setUserId(null);
     setAuthToken(null);

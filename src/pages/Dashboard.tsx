@@ -289,9 +289,8 @@ export default function Dashboard() {
         />
         <MiniStatisticsCard
           title={t("fixed_costs")}
-          value={fixedCosts}
-          //  percentage="+8%"
-          percentageColor="text-green-400"
+          value={-Math.abs(fixedCosts)} // Força valor negativo
+          percentageColor="text-red-500"
           icon={ShoppingCart}
           onAdd={(data) =>
             handleAdd(t("fixed_costs"), { ...data, type: "expense" })
