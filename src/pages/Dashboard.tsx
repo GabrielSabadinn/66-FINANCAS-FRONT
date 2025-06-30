@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { MiniStatisticsCard } from "../components/MiniStatisticsCard";
 import { WelcomeCard } from "../components/WelcomeCard";
-import { SatisfactionRateCard } from "../components/SatisfactionRateCard";
+import { NotesDashboardCard } from "../components/SatisfactionRateCard";
 import { FinancialFreedomCard } from "../components/FinancialFreedomCard";
 import { ChartCard } from "../components/ChartCard";
 import TransactionTable from "@/components/TransactionTable";
@@ -101,7 +101,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleMeta = (meta: number | null, transactions: FinancialTransaction[]) => {
+  const handleMeta = (
+    meta: number | null,
+    transactions: FinancialTransaction[]
+  ) => {
     const totalSpent: number = transactions
       .filter((transaction) => transaction.EntryType === "C")
       .reduce((sum, transaction) => sum + transaction.Value, 0);
@@ -329,7 +332,7 @@ export default function Dashboard() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr] gap-3 mb-4 md:gap-4 md:mb-6">
         <WelcomeCard t={t} />
-        <SatisfactionRateCard t={t} />
+        <NotesDashboardCard t={t} />
         <FinancialFreedomCard
           t={t}
           moneySaved={moneySaved}
@@ -342,43 +345,21 @@ export default function Dashboard() {
           t={t}
           type="line"
           title={t("data_by_month")}
-          subtitle={
-            <>
-              <span
-                className={`font-bold ${linePercentage >= 0 ? "text-green-500" : "text-red-500"
-                  }`}
-              >
-                {linePercentage >= 0 ? "+" : ""}
-                {linePercentage.toFixed(1)}% {t("more")}
-              </span>{" "}
-              {t("in")} 2025
-            </>
-          }
+          subtitle={<></>}
           data={lineData}
         />
         <ChartCard
           t={t}
           type="bar"
           title={t("today_money")}
-          subtitle={
-            <>
-              <span
-                className={`font-bold ${barPercentage >= 0 ? "text-green-400" : "text-red-500"
-                  }`}
-              >
-                {barPercentage >= 0 ? "+" : ""}
-                {barPercentage.toFixed(1)}%
-              </span>{" "}
-              {t("more")} {t("in")} {t("charts.months.may")}
-            </>
-          }
+          subtitle={<></>}
           data={barData}
         />
       </div>
       <TransactionTable
         transactions={transactions}
         title={t("recent_transactions") || "Recent Transactions"}
-        register={() => { }}
+        register={() => {}}
         hasButton={false}
         type="transaction"
       />

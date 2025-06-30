@@ -116,5 +116,13 @@
     "expenses": "Despesas"
   },
   "saving": "Salvando...",
-  "saving_changes": "Salvando alterações..."
+  "saving_changes": "Salvando alterações...",
+
+  "notes_dashboard": "Painel de notas",
+  "notes_completion_description": "Notas concluídas",
+  "add_note_placeholder": "Adicionar uma nota",
+  "add_note_button": "Adicionar nota",
+  "no_notes_message": "Nenhuma nota encontrada.",
+  "due_date": "Data de Vencimento",
+  "no_transactions": "Nenhuma transação encontrada."
 }

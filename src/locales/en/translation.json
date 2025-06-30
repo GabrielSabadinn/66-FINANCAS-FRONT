@@ -112,5 +112,12 @@
     "confirm": "Log Out"
   },
   "saving": "Saving...",
-  "saving_changes": "Saving changes..."
+  "saving_changes": "Saving changes...",
+  "notes_dashboard": "Notes Dashboard",
+  "notes_completion_description": "Completed Notes",
+  "add_note_placeholder": "Add a note",
+  "add_note_button": "Add Note",
+  "no_notes_message": "No notes found.",
+  "due_date": "Due Date",
+  "no_transactions": "No transactions found."
 }
