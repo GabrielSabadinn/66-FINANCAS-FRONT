@@ -18,7 +18,7 @@ interface FinancialFreedomCardProps {
   moneySaved?: number;
   moneyGoal?: number;
   percentage: number;
-  onGoalUpdate?: (newGoal: number) => void;
+  onGoalUpdate: () => void;
 }
 
 export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
@@ -30,11 +30,12 @@ export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
 }) => {
   const { t: translate } = useTranslation();
   // const calculatedPercentage = percentage ?? (moneySaved / moneyGoal) * 100;
+  const clampedPercentage = Math.min(percentage, 100);
   const formattedPercentage = Math.round(percentage);
 
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - percentage / 100);
+  const strokeDashoffset = circumference * (1 - clampedPercentage / 100);
 
   const [isOpen, setIsOpen] = useState(false);
   const [newGoal, setNewGoal] = useState(moneyGoal.toString());
@@ -44,13 +45,33 @@ export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
     const accessToken = localStorage.getItem("accessToken");
     const goalValue = parseFloat(newGoal);
 
-    if (!isNaN(goalValue) && goalValue > 0 && (userId != null && accessToken != null)) {
-
-      await metaService.putMeta(goalValue, Number(userId), accessToken);
-      // onGoalUpdate(goalValue);
+    // Verificações básicas
+    if (!userId || !accessToken) {
+      console.error("Credenciais não encontradas");
+      return;
     }
-    setIsOpen(false);
-    setNewGoal(goalValue.toString());
+
+    if (isNaN(goalValue) || goalValue <= 0) {
+      console.error("Valor da meta inválido");
+      return;
+    }
+
+    if (goalValue === moneyGoal) {
+      // Meta não foi alterada
+      setIsOpen(false);
+      return;
+    }
+
+    try {
+      await metaService.putMeta(goalValue, Number(userId), accessToken);
+
+      onGoalUpdate();
+      setIsOpen(false);
+      setNewGoal(goalValue.toString());
+    } catch (error) {
+      console.error("Erro ao atualizar a meta:", error);
+      // Aqui você pode adicionar um toast de erro, por exemplo
+    }
   };
 
   return (
@@ -79,7 +100,7 @@ export const FinancialFreedomCard: React.FC<FinancialFreedomCardProps> = ({
                 name="newGoal"
                 value={newGoal}
                 onChange={(e) => setNewGoal(e.target.value)}
-                className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 min="1"
                 step="0.01"
               />

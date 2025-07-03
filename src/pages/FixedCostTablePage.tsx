@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import FixedCostTable from "@/components/FixedCostTable";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import { createTransaction, fetchTransactions } from "@/services/apiService";
+import { createTransaction, deleteTransaction, fetchTransactions } from "@/services/apiService";
 import { toast } from "react-toastify";
 import TransactionTable from "@/components/TransactionTable";
 import { FinancialTransaction } from "@/types";
@@ -34,6 +34,17 @@ const FixedCostTablePage: React.FC = () => {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (id: number, date: string) => {
+    try {
+      await deleteTransaction(id, new Date(date));
+      setInvestments(prev => prev.filter(t => t.Id !== id));
+      fetchData();
+      toast.success("Deletado com sucesso");
+    } catch {
+      toast.error("Erro ao deletar");
     }
   };
 
@@ -103,7 +114,7 @@ const FixedCostTablePage: React.FC = () => {
     >
       <div className="max-w-4xl mx-auto w-full pt-14 md:pt-16">
         {/* <FixedCostTable /> */}
-        <TransactionTable transactions={investments} title={t("fixed_costs") || "Fixed Costs"} register={(data) => register(t("fixed_costs"), { ...data, type: "expense" })} hasButton={true} type="fixedCost" />
+        <TransactionTable transactions={investments} title={t("fixed_costs") || "Fixed Costs"} register={(data) => register(t("fixed_costs"), { ...data, type: "expense" })} hasButton={true} type="fixedCost" onDelete={handleDeleteTransaction} />
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   fetchBalance,
   fetchTransactions,
   createTransaction,
+  deleteTransaction,
 } from "@/services/apiService";
 import { FinancialTransaction } from "@/types";
 import { authService } from "@/services/authService";
@@ -98,6 +99,17 @@ export default function Dashboard() {
       toast.error(
         t("errors.fetch_transactions_failed") || "Failed to fetch transactions"
       );
+    }
+  };
+
+  const handleDeleteTransaction = async (id: number, date: string) => {
+    try {
+      await deleteTransaction(id, new Date(date));
+      setTransactions((prev) => prev.filter((t) => t.Id !== id));
+      fetchData();
+      toast.success("Deletado com sucesso");
+    } catch {
+      toast.error("Erro ao deletar");
     }
   };
 
@@ -338,6 +350,7 @@ export default function Dashboard() {
           moneySaved={moneySaved}
           moneyGoal={meta}
           percentage={percentageMeta}
+          onGoalUpdate={() => fetchData()}
         />
       </div>
       <div className="flex flex-col xl:flex-row gap-2 mb-3 md:gap-3 md:mb-4">
@@ -362,6 +375,7 @@ export default function Dashboard() {
         register={() => {}}
         hasButton={false}
         type="transaction"
+        onDelete={handleDeleteTransaction}
       />
     </div>
   );

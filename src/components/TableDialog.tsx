@@ -70,8 +70,8 @@ const TableDialogue: React.FC<TableDialogProps> = ({
       ...prev,
       [name]:
         name === "amount" ||
-        name === "ReturnPercentage" ||
-        name === "CategoryId"
+          name === "ReturnPercentage" ||
+          name === "CategoryId"
           ? Number(value)
           : value,
     }));
@@ -108,19 +108,19 @@ const TableDialogue: React.FC<TableDialogProps> = ({
           <DialogTitle>
             {isEdit
               ? t(
-                  type === "transaction"
-                    ? "edit_transaction"
-                    : type === "investment"
+                type === "transaction"
+                  ? "edit_transaction"
+                  : type === "investment"
                     ? "edit_investment"
                     : "edit_fixed_cost"
-                )
+              )
               : t(
-                  type === "transaction"
-                    ? "add_transaction"
-                    : type === "investment"
+                type === "transaction"
+                  ? "add_transaction"
+                  : type === "investment"
                     ? "add_investment"
                     : "add_fixed_cost"
-                )}
+              )}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -133,15 +133,15 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                 type === "fixedCost"
                   ? "dueDate"
                   : type === "investment"
-                  ? "Date"
-                  : "date"
+                    ? "Date"
+                    : "date"
               }
               value={
                 type === "fixedCost"
                   ? (formData as Partial<FixedCost>).dueDate || ""
                   : type === "investment"
-                  ? (formData as Partial<Investment>).Date || ""
-                  : (formData as Partial<FinancialTransaction>).date || ""
+                    ? (formData as Partial<Investment>).Date || ""
+                    : (formData as Partial<FinancialTransaction>).date || ""
               }
               onChange={handleChange}
               className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
@@ -156,7 +156,7 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                 type === "investment"
                   ? (formData as Partial<Investment>).Description || ""
                   : (formData as Partial<FinancialTransaction | FixedCost>)
-                      .description || ""
+                    .description || ""
               }
               onChange={handleChange}
               className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
@@ -172,10 +172,10 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                 type === "investment"
                   ? (formData as Partial<Investment>).Amount || ""
                   : (formData as Partial<FinancialTransaction | FixedCost>)
-                      .amount || ""
+                    .amount || ""
               }
               onChange={handleChange}
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           {type === "transaction" && (
@@ -202,7 +202,7 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                     (formData as Partial<FinancialTransaction>).categoryId || ""
                   }
                   onChange={handleChange}
-                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </>
@@ -219,7 +219,7 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                     (formData as Partial<Investment>).ReturnPercentage || ""
                   }
                   onChange={handleChange}
-                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
               <div>
@@ -230,7 +230,7 @@ const TableDialogue: React.FC<TableDialogProps> = ({
                   name="CategoryId"
                   value={(formData as Partial<Investment>).CategoryId || ""}
                   onChange={handleChange}
-                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                  className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </>

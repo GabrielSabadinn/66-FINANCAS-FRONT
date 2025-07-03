@@ -13,7 +13,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { deleteTransaction } from "@/services/apiService";
 import { FinancialTransaction } from "@/types";
 import TableDialog from "@/components/TableDialog";
@@ -29,6 +29,7 @@ interface TransactionTableProps {
   }) => void;
   hasButton: boolean;
   type: string;
+  onDelete: (id: number, date: string) => void;
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
@@ -37,10 +38,10 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   register,
   hasButton,
   type,
+  onDelete,
 }) => {
   const { t } = useTranslation();
-  const [filteredTransactions, setFilteredTransactions] =
-    useState<FinancialTransaction[]>(transactions);
+
   const [filters, setFilters] = useState({
     minAmount: "",
     maxAmount: "",
@@ -48,10 +49,32 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     endDate: "",
   });
 
-  useEffect(() => {
-    console.log("Received transactions:", transactions); // Debug log
-    setFilteredTransactions(transactions);
-  }, [transactions]);
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      const date = new Date(t.Date);
+      if (isNaN(date.getTime())) return false;
+
+      const minAmountMatch = filters.minAmount
+        ? t.Value >= parseFloat(filters.minAmount)
+        : true;
+      const maxAmountMatch = filters.maxAmount
+        ? t.Value <= parseFloat(filters.maxAmount)
+        : true;
+      const startDateMatch = filters.startDate
+        ? date >= new Date(filters.startDate)
+        : true;
+      const endDateMatch = filters.endDate
+        ? date <= new Date(filters.endDate)
+        : true;
+
+      return minAmountMatch && maxAmountMatch && startDateMatch && endDateMatch;
+    });
+  }, [transactions, filters]);
+
+  // useEffect(() => {
+  //   console.log("Received transactions:", transactions); // Debug log
+  //   setFilteredTransactions(transactions);
+  // }, [transactions]);
 
   const filterTransactions = (t: FinancialTransaction) => {
     const date = new Date(t.Date);
@@ -75,27 +98,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return minAmountMatch && maxAmountMatch && startDateMatch && endDateMatch;
   };
 
-  const filtered = filteredTransactions.filter(filterTransactions);
-
-  const handleDelete = async (id: number, data: string) => {
-    try {
-      const date: Date = new Date(data);
-
-      console.log("Deleted transaction with ID:", id);
-
-      await deleteTransaction(id, date);
-
-      setFilteredTransactions(filteredTransactions.filter((t) => t.Id !== id));
-      toast.success(
-        t("success.transaction_deleted") || "Transaction deleted successfully"
-      );
-    } catch (err) {
-      console.error("Error in handleDelete:", err);
-      toast.error(
-        t("errors.delete_transaction_failed") || "Failed to delete transaction"
-      );
-    }
-  };
+  var filtered = filteredTransactions.filter(filterTransactions);
 
   return (
     <Card className="bg-[rgb(19,21,54)] border-none shadow-lg rounded-lg">
@@ -134,7 +137,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               onChange={(e) =>
                 setFilters({ ...filters, minAmount: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
           </div>
@@ -148,7 +151,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               onChange={(e) =>
                 setFilters({ ...filters, maxAmount: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
           </div>
@@ -244,7 +247,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(transaction.EntryId, transaction.Date)}
+                      onClick={() => onDelete(transaction.EntryId, transaction.Date)}
                       className="hover:bg-red-900/20"
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />

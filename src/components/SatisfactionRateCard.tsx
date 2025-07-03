@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { noteService } from "@/services/noteService";
 import { Notebook, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
@@ -6,9 +7,10 @@ interface NotesDashboardCardProps {
   t: (key: string) => string;
 }
 
-interface Note {
+export interface Note {
+  id?: number; // novo
   text: string;
-  dueDate?: string; // Format: YYYY-MM-DD
+  dueDate?: string;
 }
 
 export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
@@ -23,16 +25,35 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
     currentDateTime.getTime() + 24 * 60 * 60 * 1000
   ); // 24 hours from now
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim()) return;
 
-    const newNoteEntry: Note = {
-      text: newNote.trim(),
-      dueDate: dueDate || undefined,
-    };
-    setNotes([...notes, newNoteEntry]);
-    setNewNote("");
-    setDueDate("");
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) throw new Error("Token não encontrado");
+
+      const dateString = dueDate
+        ? dueDate
+        : new Date().toISOString().split("T")[0];
+
+      const response = await noteService.createNotes(
+        newNote.trim(),
+        dateString,
+        accessToken
+      );
+
+      const newNoteEntry: Note = {
+        id: response.id,
+        text: response.text,
+        dueDate: response.dueDate,
+      };
+
+      setNotes([...notes, newNoteEntry]);
+      setNewNote("");
+      setDueDate("");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -56,6 +77,20 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
     if (noteDueDate < currentDateTime) return "overdue";
     if (noteDueDate <= dueSoonThreshold) return "due-soon";
     return "normal";
+  };
+
+  const handleDeleteNote = async (id?: number) => {
+    if (!id) return;
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) throw new Error("Token não encontrado");
+
+      await noteService.deleteNotes(id, accessToken);
+
+      setNotes(notes.filter((note) => note.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

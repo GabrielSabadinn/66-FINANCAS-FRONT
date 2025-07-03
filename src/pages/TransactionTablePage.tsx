@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TransactionTable from "@/components/TransactionTable";
 import { useAuth } from "@/context/AuthContext";
-import { fetchTransactions } from "@/services/apiService";
+import { deleteTransaction, fetchTransactions } from "@/services/apiService";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { FinancialTransaction } from "@/types";
@@ -47,6 +47,16 @@ const TransactionTablePage: React.FC = () => {
     }
   };
 
+  const handleDeleteTransaction = async (id: number, date: string) => {
+    try {
+      await deleteTransaction(id, new Date(date));
+      setTransactions(prev => prev.filter(t => t.Id !== id));
+      toast.success("Deletado com sucesso");
+    } catch {
+      toast.error("Erro ao deletar");
+    }
+  };
+
   const backgroundStyle = {
     background:
       "linear-gradient(90deg, rgba(71,5,138,1) 0%, rgba(22,10,33,1) 50%, rgba(71,5,138,1) 100%)",
@@ -71,7 +81,7 @@ const TransactionTablePage: React.FC = () => {
       style={backgroundStyle}
     >
       <div className="max-w-4xl mx-auto w-full pt-14 md:pt-16">
-        <TransactionTable transactions={transactions} title={t("recent_transactions") || "Recent Transactions"} register={() => { }} hasButton={false} type="transaction" />
+        <TransactionTable transactions={transactions} title={t("recent_transactions") || "Recent Transactions"} register={() => { }} hasButton={false} type="transaction" onDelete={handleDeleteTransaction} />
       </div>
     </div>
   );

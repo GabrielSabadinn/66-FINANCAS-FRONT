@@ -110,7 +110,7 @@ const RegisterDialog: React.FC<TableDialogProps> = ({
             name="amount"
             value={formData.amount}
             onChange={handleChange}
-            className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+            className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </div>
         <Button

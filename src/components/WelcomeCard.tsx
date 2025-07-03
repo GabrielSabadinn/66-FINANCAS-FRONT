@@ -56,9 +56,7 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ t }) => {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-violet-900/50"></div>
-      </div>
+      ></div>
       <CardContent className="w-full h-full p-6 relative z-10">
         <div className="flex flex-col h-full">
           <p className="text-sm text-gray-400 font-bold">{t("welcome_back")}</p>
@@ -70,13 +68,8 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ t }) => {
             <br />
             {/*          {t("ask_me")} */}
           </p>
-          <Button
-            variant="ghost"
-            className="p-0 bg-transparent hover:bg-transparent text-white font-bold text-sm flex items-left mt-6"
-          >
-            {/*     {t("tab_record")} */}
-            <ArrowRight className="w-5 h-5 ml-2 text-violet-400" />
-          </Button>
+
+          {/*     {t("tab_record")} */}
         </div>
       </CardContent>
     </Card>

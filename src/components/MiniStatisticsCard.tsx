@@ -30,6 +30,7 @@ interface MiniStatisticsCardProps {
     description: string;
     amount: number | undefined;
     type?: "income" | "expense";
+    category: "C" | "D";
   }) => void;
 }
 
@@ -60,19 +61,21 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
   if (recognition) {
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = t("language_code") || "en-US";
+    recognition.lang = "pt-BR"; // Fixed to Brazilian Portuguese
   }
 
   const formatValue = (val: number | string) => {
     if (typeof val === "number") {
-      const formatted = val.toLocaleString("en-US");
+      const formatted = val.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
       if (val < 0) {
-        return <span className="text-red-500">${formatted}</span>;
+        return <span className="text-red-500">{formatted}</span>;
       } else if (val > 0) {
-        return <span className="text-green-400">${formatted}</span>;
+        return <span className="text-green-400">{formatted}</span>;
       }
-      // Neutro para valor zero
-      return <span className="text-white">${formatted}</span>;
+      return <span className="text-white">{formatted}</span>;
     }
     return val;
   };
@@ -105,6 +108,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
           description: formData.description,
           amount: formData.amount,
           type: title === t("today_money") ? formData.type : undefined,
+          category: formData.type === "income" ? "C" : "D",
         });
       }
       setIsOpen(false);
@@ -118,7 +122,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
     if (!recognition || !onAdd) {
       toast.error(
         t("errors.speech_not_supported") ||
-          "Speech recognition is not supported in your browser."
+          "Reconhecimento de voz não é suportado no seu navegador."
       );
       return;
     }
@@ -129,7 +133,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
         if (permissionStatus.state === "denied") {
           toast.error(
             t("errors.microphone_permission_denied") ||
-              "Microphone access is blocked. Please allow microphone permissions in your browser settings."
+              "Acesso ao microfone bloqueado. Permita o acesso nas configurações do navegador."
           );
           return;
         }
@@ -147,53 +151,47 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
           let description = "";
           let amount: number | undefined = undefined;
           let type: "income" | "expense" = "expense";
+          let category: "C" | "D" = "D";
 
-          const incomeKeywords = [
-            "income",
-            "salary",
-            "earned",
-            "receita",
-            "salário",
-            "ganho",
-          ];
-          const expenseKeywords = ["expense", "despesa", "gasto", "spent"];
+          if (words.length >= 3) {
+            const typeWord = words[words.length - 1];
+            const amountWord = words[words.length - 2];
 
-          const numberIndex = words.findIndex((word) => /^\d+$/.test(word));
-          if (numberIndex !== -1) {
-            amount = parseInt(words[numberIndex], 10);
-            description = words.slice(0, numberIndex).join(" ").trim();
-            const remainingWords = words.slice(numberIndex + 1);
-            const typeWord = remainingWords.find(
-              (word) =>
-                incomeKeywords.includes(word) || expenseKeywords.includes(word)
-            );
-            if (typeWord) {
-              type = incomeKeywords.includes(typeWord) ? "income" : "expense";
-            }
-          } else {
-            const lastWord = words[words.length - 1];
-            if (
-              incomeKeywords.includes(lastWord) ||
-              expenseKeywords.includes(lastWord)
-            ) {
-              type = incomeKeywords.includes(lastWord) ? "income" : "expense";
-              description = words.slice(0, -1).join(" ").trim();
+            // Determine type and category
+            if (typeWord === "entrada") {
+              type = "income";
+              category = "C";
+            } else if (typeWord === "despesa") {
+              type = "expense";
+              category = "D";
             } else {
-              description = transcript;
+              toast.error(
+                t("errors.invalid_voice_input") ||
+                  "Diga: [descrição] [valor] [despesa/entrada]"
+              );
+              setIsListening(false);
+              return;
             }
+
+            // Parse amount
+            amount = parseFloat(amountWord) || undefined;
+
+            // Description is all words before the amount
+            description = words.slice(0, -2).join(" ").trim();
           }
 
           if (description && amount !== undefined && amount > 0) {
             onAdd({
-              description: description || "Voice transaction",
+              description: description || "Transação por voz",
               amount,
               type: title === t("today_money") ? type : undefined,
+              category,
             });
             toast.success(t("success.transaction_created"));
           } else {
             toast.error(
               t("errors.invalid_voice_input") ||
-                "Please say: [description] [amount] [income/expense]"
+                "Diga: [descrição] [valor] [despesa/entrada]"
             );
           }
           setIsListening(false);
@@ -205,17 +203,17 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
           if (event.error === "service-not-allowed") {
             toast.error(
               t("errors.microphone_permission_denied") ||
-                "Microphone access is blocked. Please allow microphone permissions in your browser settings."
+                "Acesso ao microfone bloqueado. Permita o acesso nas configurações do navegador."
             );
           } else if (event.error === "no-speech") {
             toast.error(
               t("errors.no_speech_detected") ||
-                "No speech was detected. Please try again."
+                "Nenhuma fala detectada. Tente novamente."
             );
           } else {
             toast.error(
               t("errors.speech_recognition_failed") ||
-                "Speech recognition failed. Please try again."
+                "Falha no reconhecimento de voz. Tente novamente."
             );
           }
         };
@@ -228,7 +226,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
         console.error("Permission query error:", err);
         toast.error(
           t("errors.speech_recognition_failed") ||
-            "Failed to check microphone permissions. Please ensure microphone access is allowed."
+            "Falha ao verificar permissões do microfone."
         );
       });
   };
@@ -254,12 +252,12 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
                 <DialogTrigger asChild>
                   <button
                     className="text-gray-400 hover:text-white transition-colors"
-                    aria-label={`Add new ${title}`}
+                    aria-label={`Adicionar novo ${title}`}
                   >
                     <Plus className="w-5 h-5 mr-2" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="bg-[rgb(30,32,70)] text-white border-none">
+                <DialogContent className="bg-[rgb(30,32,70)] text-white border yılda: none">
                   <DialogHeader>
                     <DialogTitle>
                       {t("add")} {title}
@@ -279,7 +277,7 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
                       name="amount"
                       value={formData.amount ?? ""}
                       onChange={handleChange}
-                      className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2"
+                      className="bg-[rgb(40,42,80.dark)] border-none text-white px-4 py-2 appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     {title === t("today_money") && (
                       <select
@@ -304,20 +302,22 @@ export const MiniStatisticsCard: React.FC<MiniStatisticsCardProps> = ({
               <button
                 onClick={handleEditClick}
                 className="text-gray-400 hover:text-white transition-colors"
-                aria-label={`Edit ${title}`}
+                aria-label={`Editar ${title}`}
               >
                 {/* <Edit2 className="w-4 h-4 mr-2" /> */}
               </button>
-              <button
-                onClick={handleVoiceInput}
-                className={`text-gray-400 hover:text-white transition-colors ${
-                  isListening ? "animate-pulse" : ""
-                }`}
-                aria-label="Voice input"
-                disabled={isListening || !hasSpeechRecognition}
-              >
-                <Mic className="w-5 h-5 mr-2" />
-              </button>
+              {title === t("today_money") && (
+                <button
+                  onClick={handleVoiceInput}
+                  className={`text-gray-400 hover:text-white transition-colors ${
+                    isListening ? "animate-pulse" : ""
+                  }`}
+                  aria-label="Entrada por voz"
+                  disabled={isListening || !hasSpeechRecognition}
+                >
+                  <Mic className="w-5 h-5 mr-2" />
+                </button>
+              )}
             </div>
             <div className="flex items-center justify-center w-9 h-9 bg-violet-600 rounded-lg md:w-10 md:h-10">
               <Icon className="w-4 h-4 text-white md:w-5 md:h-5" />

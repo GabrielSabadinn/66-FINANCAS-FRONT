@@ -133,8 +133,8 @@ const InvestmentTable: React.FC = () => {
         console.error("Error in fetchUserAndInvestments:", err);
         setError(
           err.message ||
-            t("errors.fetch_investments_failed") ||
-            "Failed to fetch investments"
+          t("errors.fetch_investments_failed") ||
+          "Failed to fetch investments"
         );
         setLoading(false);
         if (err.message === "No user ID found in localStorage") {
@@ -193,8 +193,8 @@ const InvestmentTable: React.FC = () => {
           isEdit && item.id
             ? item.id
             : investments.length
-            ? Math.max(...investments.map((i) => i.id)) + 1
-            : 1,
+              ? Math.max(...investments.map((i) => i.id)) + 1
+              : 1,
         UserId: userId,
         CategoryId: item.CategoryId || 1,
         CategoryName: item.CategoryName || "General",
@@ -227,8 +227,8 @@ const InvestmentTable: React.FC = () => {
       console.error("Error saving investment:", err);
       setError(
         err.message ||
-          t("errors.save_investment_failed") ||
-          "Failed to save investment"
+        t("errors.save_investment_failed") ||
+        "Failed to save investment"
       );
       toast.error(
         t("errors.save_investment_failed") || "Failed to save investment"
@@ -255,8 +255,8 @@ const InvestmentTable: React.FC = () => {
       console.error("Error deleting investment:", err);
       setError(
         err.message ||
-          t("errors.delete_investment_failed") ||
-          "Failed to delete investment"
+        t("errors.delete_investment_failed") ||
+        "Failed to delete investment"
       );
       toast.error(
         t("errors.delete_investment_failed") || "Failed to delete investment"
@@ -348,7 +348,7 @@ const InvestmentTable: React.FC = () => {
               onChange={(e) =>
                 setFilters({ ...filters, minAmount: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
           </div>
@@ -362,7 +362,7 @@ const InvestmentTable: React.FC = () => {
               onChange={(e) =>
                 setFilters({ ...filters, maxAmount: e.target.value })
               }
-              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition"
+              className="bg-[rgb(40,42,80)] border-none text-white px-4 py-2 rounded-md focus:ring-2 focus:ring-purple-500 transition appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
           </div>
@@ -426,9 +426,9 @@ const InvestmentTable: React.FC = () => {
                 <TableCell className="text-green-400 py-3">
                   {typeof investment.Amount === "number"
                     ? investment.Amount.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })
+                      style: "currency",
+                      currency: "BRL",
+                    })
                     : "N/A"}
                 </TableCell>
                 <TableCell className="py-3">
