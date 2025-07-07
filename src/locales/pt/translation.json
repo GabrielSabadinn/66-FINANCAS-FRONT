@@ -98,7 +98,14 @@
     "speech_not_supported": "Reconhecimento de voz não é suportado no seu navegador.",
     "speech_recognition_failed": "Falha ao reconhecer voz. Por favor, tente novamente.",
     "invalid_voice_input": "Por favor, diga: [descrição] [valor] [receita/despesa]",
-    "save_profile_failed": "Falha ao salvar perfil"
+    "save_profile_failed": "Falha ao salvar perfil",
+    "failed_to_fetch_notes": "Erro ao buscar notas",
+    "failed_to_create_note_no_id": "Erro ao criar nota sem ID",
+    "failed_to_create_note": "Erro ao criar nota",
+    "failed_to_update_note": "Erro ao atualizar nota",
+    "cannot_update_note_invalid": "Não é possível atualizar nota",
+    "failed_to_delete_note": "Erro ao excluir nota",
+    "cannot_delete_note_no_id": "Não é possível excluir nota sem ID"
   },
   "success": {
     "transaction_created": "Transação adicionada com sucesso.",
@@ -117,12 +124,20 @@
   },
   "saving": "Salvando...",
   "saving_changes": "Salvando alterações...",
-
   "notes_dashboard": "Painel de notas",
   "notes_completion_description": "Notas concluídas",
   "add_note_placeholder": "Adicionar uma nota",
   "add_note_button": "Adicionar nota",
   "no_notes_message": "Nenhuma nota encontrada.",
   "due_date": "Data de Vencimento",
-  "no_transactions": "Nenhuma transação encontrada."
+  "no_transactions": "Nenhuma transação encontrada.",
+  "confirm_delete_message": "Tem certeza de que deseja excluir essa nota?",
+  "confirm_delete": "Excluir",
+  "cancel": "Cancelar",
+  "delete": "Excluir",
+  "edit_note": "Editar nota",
+  "edit_note_placeholder": "Editar descrição da nota aqui",
+  "note_updated": "Nota atualizada com sucesso.",
+  "save": "Salvar",
+  "note_deleted": "Nota excluida com sucesso."
 }

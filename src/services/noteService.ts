@@ -26,7 +26,7 @@ export const noteService = {
       );
       console.log("Create note response:", response.data);
       return {
-        id: response.data.id || response.data._id || response.data.noteId, // Handle different ID field names
+        id: response.data.Id || response.data._id || response.data.noteId, // Handle different ID field names
         text: response.data.note,
         dueDate: response.data.dueDate,
       };
@@ -51,7 +51,7 @@ export const noteService = {
       });
       console.log("Get notes response:", response.data);
       return response.data.map((item: any) => ({
-        id: item.id || item._id || item.noteId, // Handle different ID field names
+        id: item.Id || item._id || item.noteId, // Handle different ID field names
         text: item.note,
         dueDate: item.dueDate,
       }));
@@ -86,7 +86,7 @@ export const noteService = {
       );
       console.log("Update note response:", response.data);
       return {
-        id: response.data.id || response.data._id || response.data.noteId,
+        id: response.data.Id || response.data._id || response.data.noteId,
         text: response.data.note,
         dueDate: response.data.dueDate,
       };

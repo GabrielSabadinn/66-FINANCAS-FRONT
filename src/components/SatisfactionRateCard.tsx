@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Notebook, AlertTriangle, Trash2, Edit2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { noteService } from "@/services/noteService";
+import { toast } from "react-toastify";
 
 interface NotesDashboardCardProps {
   t: (key: string) => string;
@@ -50,7 +51,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
         setNotes(fetchedNotes);
       } catch (err) {
         console.error("Failed to fetch notes:", err);
-        alert(t("failed_to_fetch_notes"));
+        toast.error(t("errors.failed_to_fetch_notes"));
       }
     };
     fetchNotes();
@@ -74,8 +75,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
       );
       console.log("Created note:", response);
       if (!response.id) {
-        console.error("Created note has no ID:", response);
-        alert(t("failed_to_create_note_no_id"));
+        toast.error(t("errors.failed_to_create_note_no_id"));
         return;
       }
       setNotes([...notes, response]);
@@ -83,7 +83,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
       setDueDate("");
     } catch (err) {
       console.error("Failed to create note:", err);
-      alert(t("failed_to_create_note"));
+      toast.error(t("failed_to_create_note"));
     }
   };
 
@@ -91,7 +91,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
     console.log("Edit button clicked for note:", note);
     if (note.id === undefined) {
       console.error("Cannot edit note: ID is undefined");
-      alert(t("cannot_edit_note_no_id"));
+      toast.error(t("errors.cannot_edit_note_no_id"));
       return;
     }
     setEditingNoteId(note.id);
@@ -103,7 +103,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
   const handleUpdateNote = async () => {
     if (!editingNoteId || !editText.trim()) {
       console.error("Cannot update note: Invalid ID or empty text");
-      alert(t("cannot_update_note_invalid"));
+      toast.error(t("errors.cannot_update_note_invalid"));
       return;
     }
     try {
@@ -126,7 +126,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
       setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to update note:", err);
-      alert(t("failed_to_update_note"));
+      toast.error(t("errors.failed_to_update_note"));
     }
   };
 
@@ -134,7 +134,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
     console.log("Attempting to delete note with id:", id);
     if (!id) {
       console.error("No note ID provided for deletion");
-      alert(t("cannot_delete_note_no_id"));
+      toast.error(t("errors.cannot_delete_note_no_id"));
       return;
     }
     setNoteToDelete(id);
@@ -161,7 +161,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
       setNoteToDelete(null);
     } catch (err) {
       console.error("Failed to delete note:", err);
-      alert(t("failed_to_delete_note"));
+      toast.error(t("errors.failed_to_delete_note"));
     }
   };
 
@@ -196,6 +196,16 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
     if (noteDueDate < currentDateTime) return "overdue";
     if (noteDueDate <= dueSoonThreshold) return "due-soon";
     return "normal";
+  };
+
+  // Format date to DD/MM/YYYY
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   console.log("Rendering NotesDashboardCard, notes:", notes);
@@ -274,7 +284,7 @@ export const NotesDashboardCard: React.FC<NotesDashboardCardProps> = ({
                       <p>{note.text}</p>
                       {note.dueDate && (
                         <p className="text-xs text-gray-400">
-                          {t("due_date")}: {note.dueDate}
+                          {t("due_date")}: {formatDate(note.dueDate)}
                         </p>
                       )}
                     </div>
